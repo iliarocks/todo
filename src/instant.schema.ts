@@ -16,6 +16,7 @@ const _schema = i.schema({
     todos: i.entity({
       done: i.boolean(),
       text: i.string(),
+			order: i.number().indexed(),
     }),
   },
   links: {

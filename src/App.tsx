@@ -3,11 +3,11 @@ import { Component } from "solid-js";
 import Today from "./pages/Today";
 
 const App: Component = () => {
-  return (
+	return (
 		<Router>
 			<Route path="/" component={Today} />
 		</Router>
-  );
+	);
 };
 
 export default App;
