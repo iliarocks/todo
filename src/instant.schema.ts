@@ -16,8 +16,15 @@ const _schema = i.schema({
     todos: i.entity({
       done: i.boolean(),
       text: i.string(),
-			order: i.number().indexed(),
     }),
+		events: i.entity({
+			text: i.string(),
+			date: i.date(),
+		}),
+		today: i.entity({
+			order: i.number().indexed(),
+			type: i.string(),
+		}),
   },
   links: {
     $usersLinkedPrimaryUser: {
@@ -33,6 +40,30 @@ const _schema = i.schema({
         label: "linkedGuestUsers",
       },
     },
+		todayTodo: {
+			forward: {
+				on: "today",
+				has: "one",
+				label: "todo",
+			},
+			reverse: {
+				on: "todos",
+				has: "one",
+				label: "today",
+			},
+		},
+		todayEvent: {
+			forward: {
+				on: "today",
+				has: "one",
+				label: "event",
+			},
+			reverse: {
+				on: "events",
+				has: "one",
+				label: "today",
+			},
+		},
   },
   rooms: {},
 });

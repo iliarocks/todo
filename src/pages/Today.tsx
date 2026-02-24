@@ -1,7 +1,8 @@
-import { type Component, For, Show, from } from "solid-js";
+import { type Component, For, Show } from "solid-js";
 import { db } from "../lib/db";
 import { InstaQLEntity } from "@instantdb/solidjs";
 import schema from "../instant.schema";
+import { format } from "date-fns";
 import {
 	closestCenter,
 	createSortable,
@@ -19,11 +20,14 @@ declare module "solid-js" {
 }
 
 type Todo = InstaQLEntity<typeof schema, "todos", {}, undefined, true>;
+type Event = InstaQLEntity<typeof schema, "events", {}, undefined, true>;
 
 const Today: Component = () => {
-	const state = db.useQuery({ todos: { $: { order: { order: "asc" } } } });
-	const todos = () => state().data?.todos ?? [];
-	const ids = () => todos().map((todo) => todo.id);
+	const state = db.useQuery({
+		today: { $: { order: { order: "asc" } }, todo: {}, event: {} },
+	});
+	const items = () => state().data?.today ?? [];
+	const ids = () => items().map((item) => item.id);
 
 	const onDragEnd = ({ draggable, droppable }: any) => {
 		if (draggable && droppable) {
@@ -34,7 +38,9 @@ const Today: Component = () => {
 				const reordered = ids().slice();
 				reordered.splice(toIndex, 0, ...reordered.splice(fromIndex, 1));
 
-				db.transact(reordered.map((id, order) => db.tx.todos[id].update({ order })));
+				db.transact(
+					reordered.map((id, order) => db.tx.today[id].update({ order })),
+				);
 			}
 		}
 	};
@@ -44,16 +50,32 @@ const Today: Component = () => {
 			<DragDropProvider onDragEnd={onDragEnd} collisionDetector={closestCenter}>
 				<DragDropSensors />
 				<SortableProvider ids={ids()}>
-					<For each={todos()}>
-						{(todo) => {
-							const sortable = createSortable(todo.id);
-							return <div use:sortable>{todo.text}</div>;
+					<For each={items()}>
+						{(item) => {
+							const sortable = createSortable(item.id);
+							return (
+								<div use:sortable>
+									{item.type === "todo" ? (
+										<TodoItem todo={item.todo!} />
+									) : (
+										<EventItem event={item.event!} />
+									)}
+								</div>
+							);
 						}}
 					</For>
 				</SortableProvider>
 			</DragDropProvider>
 		</Show>
 	);
+};
+
+const TodoItem: Component<{ todo: Todo }> = (props) => {
+	return <div>{props.todo.text}</div>;
+};
+
+const EventItem: Component<{ event: Event }> = (props) => {
+	return <div>{format(props.event.date, "H:m")} · {props.event.text}</div>;
 };
 
 export default Today;
