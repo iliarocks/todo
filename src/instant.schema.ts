@@ -14,7 +14,6 @@ const _schema = i.schema({
       type: i.string().optional(),
     }),
     todos: i.entity({
-      createdAt: i.number(),
       done: i.boolean(),
       text: i.string(),
     }),
