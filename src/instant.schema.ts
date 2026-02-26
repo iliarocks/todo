@@ -13,17 +13,14 @@ const _schema = i.schema({
       imageURL: i.string().optional(),
       type: i.string().optional(),
     }),
-    todos: i.entity({
-      text: i.string(),
-			date: i.date().indexed(),
-    }),
-		events: i.entity({
+		items: i.entity({
+			type: i.string(),
 			text: i.string(),
 			date: i.date().indexed(),
 		}),
 		today: i.entity({
-			order: i.number().indexed(),
 			type: i.string(),
+			order: i.number().indexed(),
 		}),
   },
   links: {
@@ -40,26 +37,14 @@ const _schema = i.schema({
         label: "linkedGuestUsers",
       },
     },
-		todayTodo: {
+		todayItem: {
 			forward: {
 				on: "today",
 				has: "one",
-				label: "todo",
+				label: "item",
 			},
 			reverse: {
-				on: "todos",
-				has: "one",
-				label: "today",
-			},
-		},
-		todayEvent: {
-			forward: {
-				on: "today",
-				has: "one",
-				label: "event",
-			},
-			reverse: {
-				on: "events",
+				on: "items",
 				has: "one",
 				label: "today",
 			},

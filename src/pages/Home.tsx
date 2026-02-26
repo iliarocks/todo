@@ -19,8 +19,7 @@ declare module "solid-js" {
 	}
 }
 
-type Todo = InstaQLEntity<typeof schema, "todos", {}, undefined, true>;
-type Event = InstaQLEntity<typeof schema, "events", {}, undefined, true>;
+type Item = InstaQLEntity<typeof schema, "items", {}, undefined, true>;
 
 const Home: Component = () => {
 	return (
@@ -34,7 +33,7 @@ const Home: Component = () => {
 
 const Today: Component = () => {
 	const state = db.useQuery({
-		today: { $: { order: { order: "asc" } }, todo: {}, event: {} },
+		today: { $: { order: { order: "asc" } }, item: {} },
 	});
 	const items = () => state().data?.today ?? [];
 	const ids = () => items().map((item) => item.id);
@@ -70,9 +69,9 @@ const Today: Component = () => {
 								return (
 									<div use:sortable>
 										{item.type === "todo" ? (
-											<TodoItem todo={item.todo!} />
+											<TodoItem todo={item.item!} />
 										) : (
-											<EventItem event={item.event!} />
+											<EventItem event={item.item!} />
 										)}
 									</div>
 								);
@@ -99,7 +98,8 @@ const CreateForm: Component = () => {
 		e.preventDefault();
 		if (!todoText() || !todoDate()) return;
 		db.transact(
-			db.tx.todos[id()].create({
+			db.tx.items[id()].create({
+				type: "todo",
 				text: todoText(),
 				date: endOfDay(new Date(todoDate())).toISOString(),
 			}),
@@ -110,7 +110,11 @@ const CreateForm: Component = () => {
 		e.preventDefault();
 		if (!eventText() || !eventDate()) return;
 		db.transact(
-			db.tx.events[id()].create({ text: eventText(), date: eventDate() }),
+			db.tx.items[id()].create({
+				type: "event",
+				text: eventText(),
+				date: eventDate(),
+			}),
 		);
 	};
 
@@ -154,27 +158,32 @@ const CreateForm: Component = () => {
 const Upcoming: Component = () => {
 	console.log(endOfToday());
 	const state = db.useQuery({
-		todos: { $: { where: { date: { $gte: endOfToday() } } } },
-		events: { $: { where: { date: { $gte: endOfToday() } } } },
+		items: { $: { where: { date: { $gte: endOfToday() } } } },
 	});
-	const todos = () => state().data?.todos ?? [];
-	const events = () => state().data?.events ?? [];
+	const items = () => state().data?.items ?? [];
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
 			<div>
-				<For each={todos()}>{(item) => <TodoItem todo={item} />}</For>
-				<For each={events()}>{(item) => <EventItem event={item} />}</For>
+				<For each={items()}>
+					{(item) => {
+						return item.type === "todo" ? (
+							<TodoItem todo={item} />
+						) : (
+							<EventItem event={item} />
+						);
+					}}
+				</For>
 			</div>
 		</Show>
 	);
 };
 
-const TodoItem: Component<{ todo: Todo }> = (props) => {
+const TodoItem: Component<{ todo: Item }> = (props) => {
 	return <div>{props.todo.text}</div>;
 };
 
-const EventItem: Component<{ event: Event }> = (props) => {
+const EventItem: Component<{ event: Item }> = (props) => {
 	return (
 		<div>
 			{format(props.event.date, "HH:mm")} · {props.event.text}
