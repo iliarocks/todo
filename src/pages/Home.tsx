@@ -1,4 +1,10 @@
-import { type Component, For, Show, createSignal } from "solid-js";
+import {
+	type Component,
+	For,
+	Show,
+	createSignal,
+	createEffect,
+} from "solid-js";
 import { db } from "../lib/db";
 import { id, InstaQLEntity } from "@instantdb/solidjs";
 import schema from "../instant.schema";
@@ -34,9 +40,30 @@ const Home: Component = () => {
 const Today: Component = () => {
 	const state = db.useQuery({
 		today: { $: { order: { order: "asc" } }, item: {} },
+		items: { $: { where: { date: { $lt: endOfToday() } } } },
 	});
+	const allItems = () => state().data?.items ?? [];
 	const items = () => state().data?.today ?? [];
 	const ids = () => items().map((item) => item.id);
+
+	createEffect(() => {
+		const linkedItemIds = new Set(items().map((t) => t.item?.id));
+		const missing = allItems().filter((item) => !linkedItemIds.has(item.id));
+		if (missing.length === 0) return;
+
+		const currentCount = items().length;
+		db.transact(
+			missing.flatMap((item, i) => {
+				const todayId = id();
+				return [
+					db.tx.today[todayId].update({
+						order: currentCount + i,
+					}),
+					db.tx.today[todayId].link({ item: item.id }),
+				];
+			}),
+		);
+	});
 
 	const onDragEnd = ({ draggable, droppable }: any) => {
 		if (draggable && droppable) {
@@ -66,12 +93,14 @@ const Today: Component = () => {
 						<For each={items()}>
 							{(item) => {
 								const sortable = createSortable(item.id);
+								const realItem = item.item;
+								if (!realItem) return;
 								return (
 									<div use:sortable>
-										{item.type === "todo" ? (
-											<TodoItem todo={item.item!} />
+										{realItem.type === "todo" ? (
+											<TodoItem todo={realItem} />
 										) : (
-											<EventItem event={item.item!} />
+											<EventItem event={realItem} />
 										)}
 									</div>
 								);

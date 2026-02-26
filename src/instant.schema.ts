@@ -19,7 +19,6 @@ const _schema = i.schema({
 			date: i.date().indexed(),
 		}),
 		today: i.entity({
-			type: i.string(),
 			order: i.number().indexed(),
 		}),
   },
