@@ -15,11 +15,11 @@ const _schema = i.schema({
     }),
     todos: i.entity({
       text: i.string(),
-			date: i.date(),
+			date: i.date().indexed(),
     }),
 		events: i.entity({
 			text: i.string(),
-			date: i.date(),
+			date: i.date().indexed(),
 		}),
 		today: i.entity({
 			order: i.number().indexed(),

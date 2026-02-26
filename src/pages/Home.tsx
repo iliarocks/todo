@@ -2,7 +2,7 @@ import { type Component, For, Show, createSignal } from "solid-js";
 import { db } from "../lib/db";
 import { id, InstaQLEntity } from "@instantdb/solidjs";
 import schema from "../instant.schema";
-import { format } from "date-fns";
+import { endOfDay, endOfToday, format } from "date-fns";
 import {
 	closestCenter,
 	createSortable,
@@ -99,7 +99,10 @@ const CreateForm: Component = () => {
 		e.preventDefault();
 		if (!todoText() || !todoDate()) return;
 		db.transact(
-			db.tx.todos[id()].create({ text: todoText(), date: todoDate() }),
+			db.tx.todos[id()].create({
+				text: todoText(),
+				date: endOfDay(new Date(todoDate())).toISOString(),
+			}),
 		);
 	};
 
@@ -109,8 +112,7 @@ const CreateForm: Component = () => {
 		db.transact(
 			db.tx.events[id()].create({ text: eventText(), date: eventDate() }),
 		);
-		
-	}
+	};
 
 	return (
 		<div class="flex flex-col gap-l">
@@ -150,7 +152,22 @@ const CreateForm: Component = () => {
 };
 
 const Upcoming: Component = () => {
-	return <h1>Upcoming</h1>;
+	console.log(endOfToday());
+	const state = db.useQuery({
+		todos: { $: { where: { date: { $gte: endOfToday() } } } },
+		events: { $: { where: { date: { $gte: endOfToday() } } } },
+	});
+	const todos = () => state().data?.todos ?? [];
+	const events = () => state().data?.events ?? [];
+
+	return (
+		<Show when={!state().isLoading && !state().error}>
+			<div>
+				<For each={todos()}>{(item) => <TodoItem todo={item} />}</For>
+				<For each={events()}>{(item) => <EventItem event={item} />}</For>
+			</div>
+		</Show>
+	);
 };
 
 const TodoItem: Component<{ todo: Todo }> = (props) => {
@@ -160,7 +177,7 @@ const TodoItem: Component<{ todo: Todo }> = (props) => {
 const EventItem: Component<{ event: Event }> = (props) => {
 	return (
 		<div>
-			{format(props.event.date, "H:m")} · {props.event.text}
+			{format(props.event.date, "HH:mm")} · {props.event.text}
 		</div>
 	);
 };
