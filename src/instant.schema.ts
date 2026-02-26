@@ -21,6 +21,11 @@ const _schema = i.schema({
 		today: i.entity({
 			order: i.number().indexed(),
 		}),
+		log: i.entity({
+			type: i.string(),
+			text: i.string(),
+			date: i.date(),
+		}),
   },
   links: {
     $usersLinkedPrimaryUser: {

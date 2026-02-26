@@ -209,13 +209,32 @@ const Upcoming: Component = () => {
 };
 
 const TodoItem: Component<{ todo: Item }> = (props) => {
-	return <div>{props.todo.text}</div>;
+	const onDelete = () => {
+		const item = props.todo;
+		db.transact([
+			db.tx.log[id()].create({
+				type: "todo",
+				text: item.text,
+				date: item.date,
+			}),
+			db.tx.items[item.id].delete(),
+		]);
+	};
+
+	return (
+		<div class="flex gap-l">
+			<p>{props.todo.text}</p>
+			<button onClick={onDelete}>complete</button>
+		</div>
+	);
 };
 
 const EventItem: Component<{ event: Item }> = (props) => {
 	return (
-		<div>
-			{format(props.event.date, "HH:mm")} · {props.event.text}
+		<div class="flex gap-l">
+			<p>
+				{format(props.event.date, "HH:mm")} · {props.event.text}
+			</p>
 		</div>
 	);
 };
