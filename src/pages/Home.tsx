@@ -30,9 +30,7 @@ type Item = InstaQLEntity<typeof schema, "items", {}, undefined, true>;
 const Home: Component = () => {
 	return (
 		<div class="grid grid-cols-3 gap-m">
-			<CreateForm />
 			<Today />
-			<Upcoming />
 		</div>
 	);
 };
@@ -108,101 +106,6 @@ const Today: Component = () => {
 						</For>
 					</SortableProvider>
 				</DragDropProvider>
-			</div>
-		</Show>
-	);
-};
-
-const CreateForm: Component = () => {
-	const [todoText, setTodoText] = createSignal("");
-	const [todoDate, setTodoDate] = createSignal(
-		format(new Date(), "yyyy-MM-dd"),
-	);
-	const [eventText, setEventText] = createSignal("");
-	const [eventDate, setEventDate] = createSignal(
-		format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-	);
-
-	const handleTodoSubmit = (e: SubmitEvent) => {
-		e.preventDefault();
-		if (!todoText() || !todoDate()) return;
-		db.transact(
-			db.tx.items[id()].create({
-				type: "todo",
-				text: todoText(),
-				date: endOfDay(new Date(todoDate())).toISOString(),
-			}),
-		);
-	};
-
-	const handleEventSubmit = (e: SubmitEvent) => {
-		e.preventDefault();
-		if (!eventText() || !eventDate()) return;
-		db.transact(
-			db.tx.items[id()].create({
-				type: "event",
-				text: eventText(),
-				date: eventDate(),
-			}),
-		);
-	};
-
-	return (
-		<div class="flex flex-col gap-l">
-			<form class="flex flex-col gap-s" onSubmit={handleTodoSubmit}>
-				<h1>Todo form</h1>
-				<input
-					type="text"
-					placeholder="text"
-					value={todoText()}
-					onInput={(e) => setTodoText(e.currentTarget.value)}
-				/>
-				<input
-					type="date"
-					min={format(new Date(), "yyyy-MM-dd")}
-					value={todoDate()}
-					onInput={(e) => setTodoDate(e.currentTarget.value)}
-				/>
-				<button type="submit">submit</button>
-			</form>
-			<form class="flex flex-col gap-s" onSubmit={handleEventSubmit}>
-				<h1>Event form</h1>
-				<input
-					type="text"
-					placeholder="text"
-					value={eventText()}
-					onInput={(e) => setEventText(e.currentTarget.value)}
-				/>
-				<input
-					type="datetime-local"
-					value={eventDate()}
-					onInput={(e) => setEventDate(e.currentTarget.value)}
-				/>
-				<button type="submit">submit</button>
-			</form>
-		</div>
-	);
-};
-
-const Upcoming: Component = () => {
-	console.log(endOfToday());
-	const state = db.useQuery({
-		items: { $: { where: { date: { $gte: endOfToday() } } } },
-	});
-	const items = () => state().data?.items ?? [];
-
-	return (
-		<Show when={!state().isLoading && !state().error}>
-			<div>
-				<For each={items()}>
-					{(item) => {
-						return item.type === "todo" ? (
-							<TodoItem todo={item} />
-						) : (
-							<EventItem event={item} />
-						);
-					}}
-				</For>
 			</div>
 		</Show>
 	);

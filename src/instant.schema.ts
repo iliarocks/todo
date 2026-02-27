@@ -17,6 +17,8 @@ const _schema = i.schema({
 			type: i.string(),
 			text: i.string(),
 			date: i.date().indexed(),
+			startTime: i.string().optional(),
+			endTime: i.string().optional(),
 		}),
 		today: i.entity({
 			order: i.number().indexed(),
