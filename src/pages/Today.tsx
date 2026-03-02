@@ -65,7 +65,6 @@ const Today: Component = () => {
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
-			<main class="grid h-full w-full place-items-center p-s">
 			<div class="w-[500px]">
 				<DragDropProvider
 					onDragEnd={onDragEnd}
@@ -92,7 +91,6 @@ const Today: Component = () => {
 					</SortableProvider>
 				</DragDropProvider>
 				</div>
-			</main>
 		</Show>
 	);
 };

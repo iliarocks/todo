@@ -9,8 +9,7 @@ const Create: Component = () => {
 	const [formType, setFormType] = createSignal<"todo" | "event">("todo");
 
 	return (
-		<main class="grid h-screen w-screen place-items-center">
-			<div class="flex flex-col gap-s w-full px-xs md:w-[450px]">
+			<div class="flex flex-col gap-s">
 				<section class="flex gap-xs">
 					<Button
 						onClick={() => setFormType("todo")}
@@ -34,7 +33,6 @@ const Create: Component = () => {
 					</Match>
 				</Switch>
 			</div>
-		</main>
 	);
 };
 

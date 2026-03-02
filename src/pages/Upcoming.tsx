@@ -26,7 +26,6 @@ const Upcoming: Component = () => {
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
-			<main class="grid h-full w-full place-items-center p-s">
 				<div class="flex flex-col gap-m">
 					<For each={Object.entries(itemsByDate())}>
 						{([date, itemGroup]) => {
@@ -34,9 +33,9 @@ const Upcoming: Component = () => {
 								itemGroup!.toSorted((a, b) => a.type.localeCompare(b.type));
 							const [weekday, monthDay] = date.split(", ");
 							return (
-								<section class="flex flex-col gap-xs w-[500px]">
+								<section class="flex flex-col gap-xs">
 									<div class="flex justify-between items-center">
-										<h2 class="text-lg">{weekday}</h2>
+										<h2>{weekday}</h2>
 										<h3 class="text-[var(--secondary)]">{monthDay}</h3>
 									</div>
 									<ul>
@@ -55,7 +54,6 @@ const Upcoming: Component = () => {
 						}}
 					</For>
 				</div>
-			</main>
 		</Show>
 	);
 };
