@@ -6,23 +6,27 @@ import { db } from "../lib/db";
 type Item = InstaQLEntity<typeof schema, "items", {}, undefined, true>;
 
 const TodoItem: Component<{ todo: Item }> = (props) => {
+	const todo = () => props.todo;
+
 	const onDelete = () => {
-		const item = props.todo;
 		db.transact([
 			db.tx.log[id()].create({
 				type: "todo",
-				text: item.text,
-				date: item.date,
+				text: todo().text,
+				date: todo().date,
 			}),
-			db.tx.items[item.id].delete(),
+			db.tx.items[todo().id].delete(),
 		]);
 	};
 
 	return (
-		<div class="flex gap-l">
-			<p>{props.todo.text}</p>
-			<button onClick={onDelete}>complete</button>
-		</div>
+		<li class="flex items-center justify-between px-xs py-xxs cursor-pointer">
+			<p>{todo().text}</p>
+			<button
+				onClick={onDelete}
+				class="size-[9px] cursor-pointer border-[1px] border-[var(--secondary)] hover:bg-[var(--tertiary)] active:bg-[var(--secondary)]"
+			/>
+		</li>
 	);
 };
 

@@ -6,12 +6,15 @@ import { format } from "date-fns";
 type Item = InstaQLEntity<typeof schema, "items", {}, undefined, true>;
 
 const EventItem: Component<{ event: Item }> = (props) => {
+	const event = () => props.event;
+
 	return (
-		<div class="flex gap-l">
-			<p>
-				{format(props.event.date, "HH:mm")} · {props.event.text}
+		<li class="flex items-center justify-between px-xs py-xxs cursor-pointer">
+			<p>{event().text}</p>
+			<p class="text-[var(--secondary)] text-sm">
+				{event().startTime!} - {event().endTime!}
 			</p>
-		</div>
+		</li>
 	);
 };
 

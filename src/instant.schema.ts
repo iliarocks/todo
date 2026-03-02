@@ -14,8 +14,8 @@ const _schema = i.schema({
       type: i.string().optional(),
     }),
 		items: i.entity({
-			type: i.string(),
-			text: i.string(),
+			type: i.string().indexed(),
+			text: i.string().indexed(),
 			date: i.date().indexed(),
 			startTime: i.string().optional(),
 			endTime: i.string().optional(),
