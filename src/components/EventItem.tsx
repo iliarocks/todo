@@ -9,7 +9,7 @@ const EventItem: Component<{ event: Item }> = (props) => {
 	const event = () => props.event;
 
 	return (
-		<li class="flex items-center justify-between px-xs py-xxs cursor-pointer">
+		<li class="flex items-center justify-between px-xs py-xxs cursor-pointer active:bg-[var(--tertiary)]">
 			<p>{event().text}</p>
 			<p class="text-[var(--secondary)] text-sm">
 				{event().startTime!} - {event().endTime!}

@@ -1,14 +1,7 @@
-import {
-	type Component,
-	For,
-	Show,
-	createSignal,
-	createEffect,
-} from "solid-js";
+import { type Component, For, Show, createEffect } from "solid-js";
 import { db } from "../lib/db";
-import { id, InstaQLEntity } from "@instantdb/solidjs";
-import schema from "../instant.schema";
-import { endOfDay, endOfToday, format } from "date-fns";
+import { id } from "@instantdb/solidjs";
+import { endOfToday } from "date-fns";
 import {
 	closestCenter,
 	createSortable,
@@ -16,6 +9,8 @@ import {
 	DragDropSensors,
 	SortableProvider,
 } from "@thisbeyond/solid-dnd";
+import TodoItem from "../components/TodoItem";
+import EventItem from "../components/EventItem";
 
 declare module "solid-js" {
 	namespace JSX {
@@ -25,40 +20,29 @@ declare module "solid-js" {
 	}
 }
 
-type Item = InstaQLEntity<typeof schema, "items", {}, undefined, true>;
-
-const Home: Component = () => {
-	return (
-		<div class="grid grid-cols-3 gap-m">
-			<Today />
-		</div>
-	);
-};
-
 const Today: Component = () => {
 	const state = db.useQuery({
 		today: { $: { order: { order: "asc" } }, item: {} },
 		items: { $: { where: { date: { $lt: endOfToday() } } } },
 	});
-	const allItems = () => state().data?.items ?? [];
-	const items = () => state().data?.today ?? [];
-	const ids = () => items().map((item) => item.id);
+	const items = () => state().data?.items ?? [];
+	const today = () => state().data?.today ?? [];
+	const ids = () => today().map((item) => item.id);
 
 	createEffect(() => {
-		const linkedItemIds = new Set(items().map((t) => t.item?.id));
-		const missing = allItems().filter((item) => !linkedItemIds.has(item.id));
+		const linkedIds = new Set(today().map((t) => t.item?.id));
+		const missing = items().filter((item) => !linkedIds.has(item.id));
 		if (missing.length === 0) return;
 
-		const currentCount = items().length;
+		const currentLength = today().length;
 		db.transact(
-			missing.flatMap((item, i) => {
+			missing.map((item, i) => {
 				const todayId = id();
-				return [
-					db.tx.today[todayId].update({
-						order: currentCount + i,
-					}),
-					db.tx.today[todayId].link({ item: item.id }),
-				];
+				return db.tx.today[todayId]
+					.update({
+						order: currentLength + i,
+					})
+					.link({ item: item.id });
 			}),
 		);
 	});
@@ -81,14 +65,15 @@ const Today: Component = () => {
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
-			<div>
+			<main class="grid h-full w-full place-items-center p-s">
+			<div class="w-[500px]">
 				<DragDropProvider
 					onDragEnd={onDragEnd}
 					collisionDetector={closestCenter}
 				>
 					<DragDropSensors />
 					<SortableProvider ids={ids()}>
-						<For each={items()}>
+						<For each={today()}>
 							{(item) => {
 								const sortable = createSortable(item.id);
 								const realItem = item.item;
@@ -106,40 +91,10 @@ const Today: Component = () => {
 						</For>
 					</SortableProvider>
 				</DragDropProvider>
-			</div>
+				</div>
+			</main>
 		</Show>
 	);
 };
 
-const TodoItem: Component<{ todo: Item }> = (props) => {
-	const onDelete = () => {
-		const item = props.todo;
-		db.transact([
-			db.tx.log[id()].create({
-				type: "todo",
-				text: item.text,
-				date: item.date,
-			}),
-			db.tx.items[item.id].delete(),
-		]);
-	};
-
-	return (
-		<div class="flex gap-l">
-			<p>{props.todo.text}</p>
-			<button onClick={onDelete}>complete</button>
-		</div>
-	);
-};
-
-const EventItem: Component<{ event: Item }> = (props) => {
-	return (
-		<div class="flex gap-l">
-			<p>
-				{format(props.event.date, "HH:mm")} · {props.event.text}
-			</p>
-		</div>
-	);
-};
-
-export default Home;
+export default Today;

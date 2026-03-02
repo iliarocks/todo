@@ -20,7 +20,7 @@ const TodoItem: Component<{ todo: Item }> = (props) => {
 	};
 
 	return (
-		<li class="flex items-center justify-between px-xs py-xxs cursor-pointer">
+		<li class="flex items-center justify-between px-xs py-xxs cursor-pointer active:bg-[var(--tertiary)]">
 			<p>{todo().text}</p>
 			<button
 				onClick={onDelete}
