@@ -37,24 +37,14 @@ const Create: Component = () => {
 		e.preventDefault();
 
 		const userId = auth().user!.id;
-		const date = startOfDay(
-			parse(form.date, "yyyy-MM-dd", new Date()),
-		).toISOString();
+		const date = startOfDay(parse(form.date, "yyyy-MM-dd", new Date())).toISOString();
 
 		if (form.mode === "none") {
 			if (form.type === "todo") createTodo(form.text, date, userId);
-			if (form.type === "event")
-				createEvent(form.text, date, form.startTime, form.endTime, userId);
+			if (form.type === "event") createEvent(form.text, date, form.startTime, form.endTime, userId);
 		} else {
 			if (form.type === "todo")
-				createRepeatingTodo(
-					form.text,
-					date,
-					form.mode,
-					form.interval,
-					form.unit,
-					userId,
-				);
+				createRepeatingTodo(form.text, date, form.mode, form.interval, form.unit, userId);
 			if (form.type === "event")
 				createRepeatingEvent(
 					form.text,
@@ -73,46 +63,40 @@ const Create: Component = () => {
 	};
 
 	return (
-		<div>
-			<form onSubmit={handleSubmit} class="flex flex-col gap-s">
-				<section class="flex justify-between">
-					<CycleButton
-						values={["todo", "event"]}
-						current={form.type}
-						onChange={(value) => resetForm(value as FormState["type"])}
-					/>
-					<Button type="submit">Submit</Button>
-				</section>
-				<Input
-					type="text"
-					placeholder="Text"
-					value={form.text}
-					onInput={(e) => setForm({ text: e.currentTarget.value })}
-					required
+		<form onSubmit={handleSubmit} class="flex flex-col gap-s">
+			<section class="flex justify-between">
+				<CycleButton
+					values={["todo", "event"]}
+					current={form.type}
+					onChange={(value) => resetForm(value as FormState["type"])}
 				/>
-				<DateTimeInputs
-					type={form.type}
-					date={form.date}
-					startTime={form.startTime}
-					endTime={form.endTime}
-					setDate={(date) => setForm({ date })}
-					setStartTime={(startTime) => setForm({ startTime })}
-					setEndTime={(endTime) => setForm({ endTime })}
-				/>
-				<RepeatInputs
-					modes={
-						form.type === "event"
-							? ["none", "absolute"]
-							: ["none", "relative", "absolute"]
-					}
-					mode={form.mode}
-					interval={form.interval}
-					unit={form.unit}
-					anchor={form.anchor}
-					setForm={setForm}
-				/>
-			</form>
-		</div>
+				<Button type="submit">Submit</Button>
+			</section>
+			<Input
+				type="text"
+				placeholder="Text"
+				value={form.text}
+				onInput={(e) => setForm({ text: e.currentTarget.value })}
+				required
+			/>
+			<DateTimeInputs
+				type={form.type}
+				date={form.date}
+				startTime={form.startTime}
+				endTime={form.endTime}
+				setDate={(date) => setForm({ date })}
+				setStartTime={(startTime) => setForm({ startTime })}
+				setEndTime={(endTime) => setForm({ endTime })}
+			/>
+			<RepeatInputs
+				modes={form.type === "event" ? ["none", "absolute"] : ["none", "relative", "absolute"]}
+				mode={form.mode}
+				interval={form.interval}
+				unit={form.unit}
+				anchor={form.anchor}
+				setForm={setForm}
+			/>
+		</form>
 	);
 };
 
@@ -126,7 +110,7 @@ const DateTimeInputs: Component<{
 	setEndTime: (t: string) => void;
 }> = (props) => {
 	return (
-		<div class="flex gap-xs">
+		<div class="flex w-full gap-xs">
 			<Input
 				type="date"
 				value={props.date}
@@ -166,8 +150,7 @@ const RepeatInputs: Component<{
 		return null;
 	};
 
-	const anchorSelected = () =>
-		props.anchor ? props.anchor.split(" ").map(Number) : [0];
+	const anchorSelected = () => (props.anchor ? props.anchor.split(" ").map(Number) : [0]);
 
 	return (
 		<div class="flex flex-col gap-s">
@@ -187,9 +170,7 @@ const RepeatInputs: Component<{
 					<Input
 						type="number"
 						value={props.interval}
-						onInput={(e) =>
-							props.setForm({ interval: Number(e.currentTarget.value) })
-						}
+						onInput={(e) => props.setForm({ interval: Number(e.currentTarget.value) })}
 						class="w-16 text-center"
 						required
 					/>
@@ -233,10 +214,7 @@ const ChipSelect: Component<{
 	};
 
 	return (
-		<div
-			class="grid gap-xs w-full"
-			style={{ "grid-template-columns": `repeat(${cols()}, 1fr)` }}
-		>
+		<div class="grid gap-xs w-full" style={{ "grid-template-columns": `repeat(${cols()}, 1fr)` }}>
 			<For each={props.values}>
 				{(value, i) => (
 					<button

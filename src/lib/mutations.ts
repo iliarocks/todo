@@ -1,5 +1,8 @@
 import { id } from "@instantdb/solidjs";
+import { startOfDay } from "date-fns";
 import { db } from "./db";
+import { Item } from "./types";
+import { nextOccurrenceDate } from "./repeat";
 
 export const createTodo = (text: string, date: string, userId: string) => {
 	if (!text || !date) return;
@@ -42,6 +45,25 @@ export const createRepeatingTodo = (
 			.create({ type: "todo", text, date })
 			.link({ template: templateId, user: userId }),
 	]);
+};
+
+export const completeTodo = (todo: Item, userId: string) => {
+	const template = todo.template;
+	if (template) {
+		const nextDate = nextOccurrenceDate(template, todo.date);
+		db.transact([
+			db.tx.items[id()]
+				.create({ type: "todo", text: todo.text, date: startOfDay(nextDate).toISOString() })
+				.link({ template: template.id, user: userId }),
+			db.tx.log[id()].create({ type: "todo", text: todo.text, date: todo.date }).link({ user: userId }),
+			db.tx.items[todo.id].delete(),
+		]);
+	} else {
+		db.transact([
+			db.tx.log[id()].create({ type: "todo", text: todo.text, date: todo.date }).link({ user: userId }),
+			db.tx.items[todo.id].delete(),
+		]);
+	}
 };
 
 export const createRepeatingEvent = (

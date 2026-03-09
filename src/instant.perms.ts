@@ -2,23 +2,16 @@
 
 import type { InstantRules } from "@instantdb/core";
 
+const ownerRule = {
+  allow: { view: "isOwner", create: "isOwner", update: "isOwner", delete: "isOwner" },
+  bind: { isOwner: "auth.id != null && auth.id in data.ref('user.id')" },
+};
+
 const rules = {
-  items: {
-    allow: { view: "isOwner", create: "isOwner", update: "isOwner", delete: "isOwner" },
-    bind: { isOwner: "auth.id != null && auth.id in data.ref('user.id')" },
-  },
-  templates: {
-    allow: { view: "isOwner", create: "isOwner", update: "isOwner", delete: "isOwner" },
-    bind: { isOwner: "auth.id != null && auth.id in data.ref('user.id')" },
-  },
-  today: {
-    allow: { view: "isOwner", create: "isOwner", update: "isOwner", delete: "isOwner" },
-    bind: { isOwner: "auth.id != null && auth.id in data.ref('user.id')" },
-  },
-  log: {
-    allow: { view: "isOwner", create: "isOwner", update: "isOwner", delete: "isOwner" },
-    bind: { isOwner: "auth.id != null && auth.id in data.ref('user.id')" },
-  },
+  items:     ownerRule,
+  templates: ownerRule,
+  today:     ownerRule,
+  log:       ownerRule,
 } satisfies InstantRules;
 
 export default rules;

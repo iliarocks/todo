@@ -26,10 +26,17 @@
 }
 
 body {
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, font-sans;
   color: var(--primary);
   background: var(--background);
-  min-height: 100dvh;
+}
+
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 input[type="number"]::-webkit-outer-spin-button,

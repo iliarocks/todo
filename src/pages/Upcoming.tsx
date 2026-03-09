@@ -21,10 +21,7 @@ const Upcoming: Component = () => {
 		items: {
 			$: {
 				where: {
-					and: [
-						{ date: { $gte: endOfToday() } },
-						{ date: { $lte: addDays(endOfToday(), 13) } },
-					],
+					and: [{ date: { $gte: endOfToday() } }, { date: { $lte: addDays(endOfToday(), 13) } }],
 				},
 			},
 			template: {},
@@ -34,37 +31,28 @@ const Upcoming: Component = () => {
 		},
 	});
 	const realItems = () => state().data?.items ?? [];
-	const virtualItems = () =>
-		generateVirtualItems(state().data?.templates ?? []);
+	const virtualItems = () => generateVirtualItems(state().data?.templates ?? []);
 	const items = () =>
-		[...realItems(), ...virtualItems()].sort(
-			(a, b) => a.date.getTime() - b.date.getTime(),
-		);
-	const itemsByDate = () =>
-		Object.groupBy(items(), (item) => format(item.date, "EEEE, MMMM d"));
+		[...realItems(), ...virtualItems()].sort((a, b) => a.date.getTime() - b.date.getTime());
+	const itemsByDate = () => Object.groupBy(items(), (item) => format(item.date, "EEEE, MMMM d"));
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
-			<div class="flex flex-col gap-m">
+			<div class="flex flex-col gap-l">
 				<For each={Object.entries(itemsByDate())}>
 					{([date, itemGroup]) => {
-						const sorted = () =>
-							itemGroup!.toSorted((a, b) => a.type.localeCompare(b.type));
 						const [weekday, monthDay] = date.split(", ");
 						return (
 							<section class="flex flex-col gap-xs">
-								<div class="flex justify-between items-center">
+								<header class="flex justify-between px-xs text-[var(--secondary)]">
 									<h2>{weekday}</h2>
-									<h3 class="text-[var(--secondary)]">{monthDay}</h3>
-								</div>
+									<h2>{monthDay}</h2>
+								</header>
 								<ul>
-									<For each={sorted()}>
+									<For each={itemGroup}>
 										{(item) =>
 											item.type === "todo" ? (
-												<TodoItem
-													todo={item}
-													virtual={item.id.startsWith("virtual-")}
-												/>
+												<TodoItem todo={item} virtual={item.id.startsWith("virtual-")} />
 											) : (
 												<EventItem event={item} />
 											)

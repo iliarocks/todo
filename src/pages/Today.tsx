@@ -106,32 +106,27 @@ const Today: Component = () => {
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
-			<div class="w-[500px]">
-				<DragDropProvider
-					onDragEnd={onDragEnd}
-					collisionDetector={closestCenter}
-				>
-					<DragDropSensors />
-					<SortableProvider ids={ids()}>
-						<For each={today()}>
-							{(item) => {
-								const sortable = createSortable(item.id);
-								const realItem = item.item;
-								if (!realItem) return;
-								return (
-									<div use:sortable>
-										{realItem.type === "todo" ? (
-											<TodoItem todo={realItem} />
-										) : (
-											<EventItem event={realItem} />
-										)}
-									</div>
-								);
-							}}
-						</For>
-					</SortableProvider>
-				</DragDropProvider>
-			</div>
+			<DragDropProvider onDragEnd={onDragEnd} collisionDetector={closestCenter}>
+				<DragDropSensors />
+				<SortableProvider ids={ids()}>
+					<For each={today()}>
+						{(item) => {
+							const sortable = createSortable(item.id);
+							const realItem = item.item;
+							if (!realItem) return;
+							return (
+								<div use:sortable>
+									{realItem.type === "todo" ? (
+										<TodoItem todo={realItem} />
+									) : (
+										<EventItem event={realItem} />
+									)}
+								</div>
+							);
+						}}
+					</For>
+				</SortableProvider>
+			</DragDropProvider>
 		</Show>
 	);
 };

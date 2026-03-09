@@ -56,19 +56,6 @@ const _schema = i.schema({
 			forward: { on: "$users", has: "many", label: "log" },
 			reverse: { on: "log", has: "one", label: "user" },
 		},
-		$usersLinkedPrimaryUser: {
-			forward: {
-				on: "$users",
-				has: "one",
-				label: "linkedPrimaryUser",
-				onDelete: "cascade",
-			},
-			reverse: {
-				on: "$users",
-				has: "many",
-				label: "linkedGuestUsers",
-			},
-		},
 		todayItem: {
 			forward: {
 				on: "today",
