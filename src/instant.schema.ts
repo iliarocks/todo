@@ -40,6 +40,22 @@ const _schema = i.schema({
 		}),
 	},
 	links: {
+		userItems: {
+			forward: { on: "$users", has: "many", label: "items" },
+			reverse: { on: "items", has: "one", label: "user" },
+		},
+		userTemplates: {
+			forward: { on: "$users", has: "many", label: "templates" },
+			reverse: { on: "templates", has: "one", label: "user" },
+		},
+		userToday: {
+			forward: { on: "$users", has: "many", label: "today" },
+			reverse: { on: "today", has: "one", label: "user" },
+		},
+		userLog: {
+			forward: { on: "$users", has: "many", label: "log" },
+			reverse: { on: "log", has: "one", label: "user" },
+		},
 		$usersLinkedPrimaryUser: {
 			forward: {
 				on: "$users",

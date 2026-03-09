@@ -6,9 +6,11 @@ import { Item } from "../lib/types";
 import { nextOccurrenceDate } from "../lib/repeat";
 
 const TodoItem: Component<{ todo: Item; virtual?: boolean }> = (props) => {
+	const auth = db.useAuth();
 	const todo = () => props.todo;
 
 	const onComplete = () => {
+		const userId = auth().user!.id;
 		const template = todo().template;
 		if (template) {
 			const nextDate = nextOccurrenceDate(template, todo().date);
@@ -16,13 +18,17 @@ const TodoItem: Component<{ todo: Item; virtual?: boolean }> = (props) => {
 			db.transact([
 				db.tx.items[nextId]
 					.create({ type: "todo", text: todo().text, date: startOfDay(nextDate).toISOString() })
-					.link({ template: template.id }),
-				db.tx.log[id()].create({ type: "todo", text: todo().text, date: todo().date }),
+					.link({ template: template.id, user: userId }),
+				db.tx.log[id()]
+					.create({ type: "todo", text: todo().text, date: todo().date })
+					.link({ user: userId }),
 				db.tx.items[todo().id].delete(),
 			]);
 		} else {
 			db.transact([
-				db.tx.log[id()].create({ type: "todo", text: todo().text, date: todo().date }),
+				db.tx.log[id()]
+					.create({ type: "todo", text: todo().text, date: todo().date })
+					.link({ user: userId }),
 				db.tx.items[todo().id].delete(),
 			]);
 		}

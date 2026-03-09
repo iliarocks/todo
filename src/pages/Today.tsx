@@ -22,6 +22,7 @@ declare module "solid-js" {
 }
 
 const Today: Component = () => {
+	const auth = db.useAuth();
 	const state = db.useQuery({
 		today: { $: { order: { order: "asc" } }, item: { template: {} } },
 		items: { $: { where: { date: { $lt: endOfToday() } } } },
@@ -32,6 +33,9 @@ const Today: Component = () => {
 
 	// Add any unlinked past items to today
 	createEffect(() => {
+		const userId = auth().user?.id;
+		if (!userId) return;
+
 		const linkedIds = new Set(today().map((t) => t.item?.id));
 		const missing = items().filter((item) => !linkedIds.has(item.id));
 		if (missing.length === 0) return;
@@ -42,13 +46,16 @@ const Today: Component = () => {
 				const todayId = id();
 				return db.tx.today[todayId]
 					.update({ order: currentLength + i })
-					.link({ item: item.id });
+					.link({ item: item.id, user: userId });
 			}),
 		);
 	});
 
 	// Reconcile past events: delete them, and advance repeating ones to next instance
 	createEffect(() => {
+		const userId = auth().user?.id;
+		if (!userId) return;
+
 		const pastEvents = today().filter(
 			(t) => t.item?.type === "event" && t.item.date < startOfToday(),
 		);
@@ -74,7 +81,7 @@ const Today: Component = () => {
 							startTime: item.startTime!,
 							endTime: item.endTime!,
 						})
-						.link({ template: item.template.id }),
+						.link({ template: item.template.id, user: userId }),
 					...deleteOps,
 				];
 			}),

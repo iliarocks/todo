@@ -10,6 +10,7 @@ import {
 	createRepeatingTodo,
 	createTodo,
 } from "../lib/mutations";
+import { db } from "../lib/db";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
@@ -27,6 +28,7 @@ type FormState = {
 };
 
 const Create: Component = () => {
+	const auth = db.useAuth();
 	const [form, setForm] = createStore<FormState>(defaultForm("todo"));
 
 	const resetForm = (type: FormState["type"]) => setForm(defaultForm(type));
@@ -34,14 +36,15 @@ const Create: Component = () => {
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 
+		const userId = auth().user!.id;
 		const date = startOfDay(
 			parse(form.date, "yyyy-MM-dd", new Date()),
 		).toISOString();
 
 		if (form.mode === "none") {
-			if (form.type === "todo") createTodo(form.text, date);
+			if (form.type === "todo") createTodo(form.text, date, userId);
 			if (form.type === "event")
-				createEvent(form.text, date, form.startTime, form.endTime);
+				createEvent(form.text, date, form.startTime, form.endTime, userId);
 		} else {
 			if (form.type === "todo")
 				createRepeatingTodo(
@@ -50,6 +53,7 @@ const Create: Component = () => {
 					form.mode,
 					form.interval,
 					form.unit,
+					userId,
 				);
 			if (form.type === "event")
 				createRepeatingEvent(
@@ -61,6 +65,7 @@ const Create: Component = () => {
 					form.anchor,
 					form.startTime,
 					form.endTime,
+					userId,
 				);
 		}
 
