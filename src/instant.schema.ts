@@ -3,20 +3,30 @@
 import { i } from "@instantdb/solidjs";
 
 const _schema = i.schema({
-  entities: {
-    $files: i.entity({
-      path: i.string().unique().indexed(),
-      url: i.string(),
-    }),
-    $users: i.entity({
-      email: i.string().unique().indexed().optional(),
-      imageURL: i.string().optional(),
-      type: i.string().optional(),
-    }),
+	entities: {
+		$files: i.entity({
+			path: i.string().unique().indexed(),
+			url: i.string(),
+		}),
+		$users: i.entity({
+			email: i.string().unique().indexed().optional(),
+			imageURL: i.string().optional(),
+			type: i.string().optional(),
+		}),
 		items: i.entity({
 			type: i.string().indexed(),
 			text: i.string().indexed(),
 			date: i.date().indexed(),
+			startTime: i.string().optional(),
+			endTime: i.string().optional(),
+		}),
+		templates: i.entity({
+			type: i.string(),
+			text: i.string(),
+			mode: i.string(),
+			interval: i.number(),
+			unit: i.string(),
+			anchor: i.string().optional(),
 			startTime: i.string().optional(),
 			endTime: i.string().optional(),
 		}),
@@ -28,21 +38,21 @@ const _schema = i.schema({
 			text: i.string(),
 			date: i.date(),
 		}),
-  },
-  links: {
-    $usersLinkedPrimaryUser: {
-      forward: {
-        on: "$users",
-        has: "one",
-        label: "linkedPrimaryUser",
-        onDelete: "cascade",
-      },
-      reverse: {
-        on: "$users",
-        has: "many",
-        label: "linkedGuestUsers",
-      },
-    },
+	},
+	links: {
+		$usersLinkedPrimaryUser: {
+			forward: {
+				on: "$users",
+				has: "one",
+				label: "linkedPrimaryUser",
+				onDelete: "cascade",
+			},
+			reverse: {
+				on: "$users",
+				has: "many",
+				label: "linkedGuestUsers",
+			},
+		},
 		todayItem: {
 			forward: {
 				on: "today",
@@ -55,8 +65,21 @@ const _schema = i.schema({
 				label: "today",
 			},
 		},
-  },
-  rooms: {},
+		templateItem: {
+			forward: {
+				on: "templates",
+				has: "one",
+				label: "instance",
+				required: true,
+			},
+			reverse: {
+				on: "items",
+				has: "one",
+				label: "template",
+			},
+		},
+	},
+	rooms: {},
 });
 
 // This helps TypeScript display nicer intellisense

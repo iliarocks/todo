@@ -1,7 +1,7 @@
 import { type Component, For, Show, createEffect } from "solid-js";
 import { db } from "../lib/db";
 import { id } from "@instantdb/solidjs";
-import { endOfToday } from "date-fns";
+import { endOfToday, startOfDay, startOfToday } from "date-fns";
 import {
 	closestCenter,
 	createSortable,
@@ -11,6 +11,7 @@ import {
 } from "@thisbeyond/solid-dnd";
 import TodoItem from "../components/TodoItem";
 import EventItem from "../components/EventItem";
+import { nextOccurrenceDate } from "../lib/repeat";
 
 declare module "solid-js" {
 	namespace JSX {
@@ -22,13 +23,14 @@ declare module "solid-js" {
 
 const Today: Component = () => {
 	const state = db.useQuery({
-		today: { $: { order: { order: "asc" } }, item: {} },
+		today: { $: { order: { order: "asc" } }, item: { template: {} } },
 		items: { $: { where: { date: { $lt: endOfToday() } } } },
 	});
 	const items = () => state().data?.items ?? [];
 	const today = () => state().data?.today ?? [];
 	const ids = () => today().map((item) => item.id);
 
+	// Add any unlinked past items to today
 	createEffect(() => {
 		const linkedIds = new Set(today().map((t) => t.item?.id));
 		const missing = items().filter((item) => !linkedIds.has(item.id));
@@ -39,10 +41,42 @@ const Today: Component = () => {
 			missing.map((item, i) => {
 				const todayId = id();
 				return db.tx.today[todayId]
-					.update({
-						order: currentLength + i,
-					})
+					.update({ order: currentLength + i })
 					.link({ item: item.id });
+			}),
+		);
+	});
+
+	// Reconcile past events: delete them, and advance repeating ones to next instance
+	createEffect(() => {
+		const pastEvents = today().filter(
+			(t) => t.item?.type === "event" && t.item.date < startOfToday(),
+		);
+		if (pastEvents.length === 0) return;
+
+		db.transact(
+			pastEvents.flatMap((t) => {
+				const item = t.item!;
+				const deleteOps = [
+					db.tx.today[t.id].delete(),
+					db.tx.items[item.id].delete(),
+				];
+				if (!item.template) return deleteOps;
+
+				const nextDate = nextOccurrenceDate(item.template, item.date);
+				const nextId = id();
+				return [
+					db.tx.items[nextId]
+						.create({
+							type: "event",
+							text: item.text,
+							date: startOfDay(nextDate).toISOString(),
+							startTime: item.startTime!,
+							endTime: item.endTime!,
+						})
+						.link({ template: item.template.id }),
+					...deleteOps,
+				];
 			}),
 		);
 	});
@@ -90,7 +124,7 @@ const Today: Component = () => {
 						</For>
 					</SortableProvider>
 				</DragDropProvider>
-				</div>
+			</div>
 		</Show>
 	);
 };
