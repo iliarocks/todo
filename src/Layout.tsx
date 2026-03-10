@@ -12,8 +12,8 @@ const Layout: ParentComponent = (props) => {
 
 	return (
 		<Show when={auth().user} fallback={<Login />}>
-			<div class="flex flex-col h-dvh w-dvw gap-s p-s max-h-dvh">
-				<main class="grow overflow-scroll">{props.children}</main>
+			<div class="flex flex-col h-dvh w-dvw gap-s p-s max-h-dvh md:w-[600px] md:m-auto">
+				<main class="grow overflow-y-scroll">{props.children}</main>
 				<Button class="relative text-3xl z-2" onClick={toggle}>
 					· · ·
 				</Button>

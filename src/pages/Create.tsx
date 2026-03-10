@@ -1,9 +1,9 @@
-import { type Component, Show, For } from "solid-js";
+import { type Component, Show } from "solid-js";
 import { format, parse, startOfDay } from "date-fns";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import CycleButton from "../components/CycleButton";
+import ToggleSelect from "../components/ToggleButton";
 import {
 	createEvent,
 	createRepeatingEvent,
@@ -12,18 +12,26 @@ import {
 } from "../lib/mutations";
 import { db } from "../lib/db";
 
-const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+const TYPES = ["todo", "event"] as const;
+const MODES = ["none", "absolute", "relative"] as const;
+const UNITS = ["day", "week", "month"] as const;
+const WEEK_DAYS = ["s", "m", "t", "w", "t", "f", "s"] as const;
 const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
+
+type FormType = (typeof TYPES)[number];
+type Mode = (typeof MODES)[number];
+type Unit = (typeof UNITS)[number];
+
 type FormState = {
-	type: "todo" | "event";
+	type: FormType;
 	text: string;
 	date: string;
 	startTime: string;
 	endTime: string;
-	mode: "none" | "relative" | "absolute";
+	mode: Mode;
 	interval: number;
-	unit: "day" | "week" | "month";
+	unit: Unit;
 	anchor: string;
 };
 
@@ -63,14 +71,15 @@ const Create: Component = () => {
 	};
 
 	return (
-		<form onSubmit={handleSubmit} class="flex flex-col gap-s">
-			<section class="flex justify-between">
-				<CycleButton
-					values={["todo", "event"]}
-					current={form.type}
-					onChange={(value) => resetForm(value as FormState["type"])}
+		<form onSubmit={handleSubmit} class="flex flex-col gap-[24px]">
+			<section class="flex justify-between items-center">
+				<ToggleSelect
+					options={TYPES}
+					selected={[TYPES.indexOf(form.type)]}
+					onSelect={([i]) => resetForm(TYPES[i])}
+					single
 				/>
-				<Button type="submit">Submit</Button>
+				<Button type="submit">Save</Button>
 			</section>
 			<Input
 				type="text"
@@ -79,23 +88,27 @@ const Create: Component = () => {
 				onInput={(e) => setForm({ text: e.currentTarget.value })}
 				required
 			/>
-			<DateTimeInputs
-				type={form.type}
-				date={form.date}
-				startTime={form.startTime}
-				endTime={form.endTime}
-				setDate={(date) => setForm({ date })}
-				setStartTime={(startTime) => setForm({ startTime })}
-				setEndTime={(endTime) => setForm({ endTime })}
-			/>
-			<RepeatInputs
-				modes={form.type === "event" ? ["none", "absolute"] : ["none", "relative", "absolute"]}
-				mode={form.mode}
-				interval={form.interval}
-				unit={form.unit}
-				anchor={form.anchor}
-				setForm={setForm}
-			/>
+			<section class="flex flex-col gap-xs">
+				<p class="text-xs text-[var(--secondary)]">WHEN</p>
+				<DateTimeInputs
+					type={form.type}
+					date={form.date}
+					startTime={form.startTime}
+					endTime={form.endTime}
+					setForm={setForm}
+				/>
+			</section>
+			<section class="flex flex-col gap-xs">
+				<p class="text-xs text-[var(--secondary)]">REPEAT</p>
+				<RepeatInputs
+					type={form.type}
+					mode={form.mode}
+					interval={form.interval}
+					unit={form.unit}
+					anchor={form.anchor}
+					setForm={setForm}
+				/>
+			</section>
 		</form>
 	);
 };
@@ -103,31 +116,31 @@ const Create: Component = () => {
 const DateTimeInputs: Component<{
 	type: "todo" | "event";
 	date: string;
-	setDate: (d: string) => void;
 	startTime: string;
-	setStartTime: (t: string) => void;
 	endTime: string;
-	setEndTime: (t: string) => void;
+	setForm: SetStoreFunction<FormState>;
 }> = (props) => {
+	const isEvent = () => props.type === "event";
+
 	return (
-		<div class="flex w-full gap-xs">
+		<div class="flex gap-xs">
 			<Input
 				type="date"
 				value={props.date}
-				onInput={(e) => props.setDate(e.currentTarget.value)}
+				onInput={(e) => props.setForm({ date: e.currentTarget.value })}
 				required
 			/>
-			<Show when={props.type === "event"}>
+			<Show when={isEvent()}>
 				<Input
 					type="time"
 					value={props.startTime}
-					onInput={(e) => props.setStartTime(e.currentTarget.value)}
+					onInput={(e) => props.setForm({ startTime: e.currentTarget.value })}
 					required
 				/>
 				<Input
 					type="time"
 					value={props.endTime}
-					onInput={(e) => props.setEndTime(e.currentTarget.value)}
+					onInput={(e) => props.setForm({ endTime: e.currentTarget.value })}
 					required
 				/>
 			</Show>
@@ -136,100 +149,59 @@ const DateTimeInputs: Component<{
 };
 
 const RepeatInputs: Component<{
-	modes: string[];
-	mode: "none" | "relative" | "absolute";
+	type: FormType;
+	mode: Mode;
 	interval: number;
-	unit: "day" | "week" | "month";
+	unit: Unit;
 	anchor: string;
 	setForm: SetStoreFunction<FormState>;
 }> = (props) => {
-	const anchorConfig = () => {
-		if (props.mode !== "absolute") return null;
-		if (props.unit === "week") return { values: WEEK_DAYS };
-		if (props.unit === "month") return { values: MONTH_DAYS, cols: 7 };
-		return null;
-	};
-
+	const modes = () => (props.type === "event" ? MODES.slice(0, -1) : MODES);
 	const anchorSelected = () => (props.anchor ? props.anchor.split(" ").map(Number) : [0]);
+	const showAnchor = () => props.mode === "absolute" && props.unit !== "day";
 
 	return (
 		<div class="flex flex-col gap-s">
-			<div class="flex gap-xs">
-				<CycleButton
-					values={props.modes}
-					current={props.mode}
-					onChange={(value) => {
-						const mode = value as FormState["mode"];
-						props.setForm({
-							mode,
-							anchor: mode === "absolute" && props.unit !== "day" ? "0" : "",
-						});
-					}}
-				/>
-				<Show when={props.mode !== "none"}>
+			<ToggleSelect
+				options={modes()}
+				selected={[modes().indexOf(props.mode)]}
+				onSelect={([i]) => {
+					const mode = modes()[i];
+					props.setForm({ mode, anchor: mode === "absolute" && props.unit !== "day" ? "0" : "" });
+				}}
+				single
+			/>
+			<Show when={props.mode !== "none"}>
+				<div class="flex items-center gap-xs">
+					<span class="text-[var(--secondary)]">Every</span>
 					<Input
 						type="number"
 						value={props.interval}
 						onInput={(e) => props.setForm({ interval: Number(e.currentTarget.value) })}
-						class="w-16 text-center"
+						class="py-xs w-12 text-center"
 						required
 					/>
-					<CycleButton
-						values={["day", "week", "month"]}
-						current={props.unit}
-						onChange={(value) => {
-							const unit = value as FormState["unit"];
-							props.setForm({ unit, anchor: unit === "day" ? "" : "0" });
-						}}
-					/>
-				</Show>
-			</div>
-			<Show when={anchorConfig()}>
-				{(config) => (
-					<ChipSelect
-						values={config().values}
-						cols={config().cols}
-						selected={anchorSelected()}
-						onChange={(indices) => props.setForm({ anchor: indices.join(" ") })}
-					/>
-				)}
+					<div class="grow">
+						<ToggleSelect
+							options={UNITS}
+							selected={[UNITS.indexOf(props.unit)]}
+							onSelect={([i]) => {
+								const unit = UNITS[i];
+								props.setForm({ unit, anchor: unit === "day" ? "" : "0" });
+							}}
+							single
+						/>
+					</div>
+				</div>
 			</Show>
-		</div>
-	);
-};
-
-const ChipSelect: Component<{
-	values: readonly string[];
-	selected: readonly number[];
-	onChange: (indices: number[]) => void;
-	cols?: number;
-}> = (props) => {
-	const cols = () => props.cols ?? props.values.length;
-
-	const toggle = (i: number) => {
-		const next = props.selected.includes(i)
-			? props.selected.filter((x) => x !== i)
-			: [...props.selected, i].sort((a, b) => a - b);
-		if (next.length > 0) props.onChange(next);
-	};
-
-	return (
-		<div class="grid gap-xs w-full" style={{ "grid-template-columns": `repeat(${cols()}, 1fr)` }}>
-			<For each={props.values}>
-				{(value, i) => (
-					<button
-						type="button"
-						onClick={() => toggle(i())}
-						class={`w-full p-xs cursor-pointer text-center ${
-							props.selected.includes(i())
-								? "bg-[var(--primary)] text-[var(--background)]"
-								: "bg-[var(--tertiary)]"
-						}`}
-					>
-						{value}
-					</button>
-				)}
-			</For>
+			<Show when={showAnchor()}>
+				<ToggleSelect
+					options={props.unit === "week" ? WEEK_DAYS : MONTH_DAYS}
+					selected={anchorSelected()}
+					onSelect={(indices) => props.setForm({ anchor: indices.join(" ") })}
+					cols={props.unit === "month" ? 7 : undefined}
+				/>
+			</Show>
 		</div>
 	);
 };

@@ -11,7 +11,7 @@ const TodoItem: Component<{ todo: Item; virtual?: boolean }> = (props) => {
 	const onComplete = () => completeTodo(todo(), auth().user!.id);
 
 	return (
-		<li class="flex items-center justify-between px-xs py-xxs cursor-pointer active:bg-[var(--tertiary)]">
+		<li class="flex items-center justify-between px-xs py-2xs cursor-pointer active:bg-[var(--tertiary)]">
 			<p>{todo().text}</p>
 			{props.virtual ? (
 				<Icon size={18} class="text-[var(--secondary)]">restart_alt</Icon>
