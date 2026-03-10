@@ -20,7 +20,7 @@ const Login: Component = () => {
 	};
 
 	return (
-		<main class="grid h-dvh w-dvw p-s place-items-center">
+		<main class="grid h-full w-full p-s place-items-center">
 			<Switch>
 				<Match when={step() === "email"}>
 					<form onSubmit={handleEmailSubmit} class="flex flex-col w-full gap-s">

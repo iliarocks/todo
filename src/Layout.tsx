@@ -11,9 +11,9 @@ const Layout: ParentComponent = (props) => {
 	const toggle = () => setShow(!show());
 
 	return (
-		<div class="h-dvh w-dvh md:w-[600px] md:m-auto">
+		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
 			<Show when={auth().user} fallback={<Login />}>
-				<div class="flex flex-col gap-s py-s h-full">
+				<div class="flex flex-col gap-s py-s h-full w-full">
 					<main class="grow px-s overflow-y-scroll">{props.children}</main>
 					<Button class="relative text-3xl z-2" onClick={toggle}>
 						· · ·
