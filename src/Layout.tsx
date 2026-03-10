@@ -11,19 +11,21 @@ const Layout: ParentComponent = (props) => {
 	const toggle = () => setShow(!show());
 
 	return (
-		<Show when={auth().user} fallback={<Login />}>
-			<div class="flex flex-col h-dvh w-dvw gap-s p-s max-h-dvh md:w-[600px] md:m-auto">
-				<main class="grow overflow-y-scroll">{props.children}</main>
-				<Button class="relative text-3xl z-2" onClick={toggle}>
-					· · ·
-				</Button>
-				<Show when={show()}>
-					<div class="absolute inset-0 z-1 grid place-items-center bg-[var(--background)]">
-						<Navigation onClose={() => setShow(false)} />
-					</div>
-				</Show>
-			</div>
-		</Show>
+		<div class="h-dvh w-dvh md:w-[600px] md:m-auto">
+			<Show when={auth().user} fallback={<Login />}>
+				<div class="flex flex-col gap-s py-s h-full">
+					<main class="grow px-s overflow-y-scroll">{props.children}</main>
+					<Button class="relative text-3xl z-2" onClick={toggle}>
+						· · ·
+					</Button>
+					<Show when={show()}>
+						<div class="absolute inset-0 z-1 grid place-items-center bg-[var(--background)]">
+							<Navigation onClose={() => setShow(false)} />
+						</div>
+					</Show>
+				</div>
+			</Show>
+		</div>
 	);
 };
 
