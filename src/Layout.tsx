@@ -4,22 +4,14 @@ import { inject } from "@vercel/analytics";
 import { db } from "./lib/db";
 import Login from "./pages/Login";
 import Icon from "./components/Icon";
+import Button from "./components/Button";
 
 const Layout: ParentComponent = (props) => {
 	onMount(() => inject());
 	const auth = db.useAuth();
 	const location = useLocation();
 	const navigate = useNavigate();
-
-	const onMenuClick = () => {
-		if (location.pathname === "/menu") navigate(-1);
-		else navigate("/menu");
-	};
-
-	const onCreateClick = () => {
-		if (location.pathname === "/create") navigate(-1);
-		else navigate("/create");
-	};
+	const showClose = () => location.pathname === "/menu" || location.pathname === "/create";
 
 	return (
 		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
@@ -27,13 +19,20 @@ const Layout: ParentComponent = (props) => {
 				<Show when={auth().user} fallback={<Login />}>
 					<div class="flex flex-col gap-s py-s h-full w-full">
 						<main class="grow px-s overflow-y-scroll">{props.children}</main>
-						<div class="flex justify-between px-s">
-							<button class="cursor-pointer" onClick={onMenuClick}>
+						<div class="flex justify-center gap-l px-s">
+						<Show when={showClose()}>
+							<Button onClick={() => navigate(-1)}>
+								<Icon>close</Icon>
+							</Button>
+						</Show>
+						<Show when={!showClose()}>
+							<A href="/menu">
 								<Icon>more_vert</Icon>
-							</button>
-							<button class="cursor-pointer" onClick={onCreateClick}>
+							</A>
+							<A href="/create">
 								<Icon>playlist_add</Icon>
-							</button>
+							</A>
+							</Show>
 						</div>
 					</div>
 				</Show>
