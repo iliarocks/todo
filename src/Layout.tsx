@@ -1,50 +1,42 @@
-import { A } from "@solidjs/router";
-import { Component, createSignal, ParentComponent, Show } from "solid-js";
+import { A, useLocation, useNavigate } from "@solidjs/router";
+import { ParentComponent, Show } from "solid-js";
 import { db } from "./lib/db";
 import Login from "./pages/Login";
-import Button from "./components/Button";
+import Icon from "./components/Icon";
 
 const Layout: ParentComponent = (props) => {
-	const [show, setShow] = createSignal(false);
 	const auth = db.useAuth();
+	const location = useLocation();
+	const navigate = useNavigate();
 
-	const toggle = () => setShow(!show());
+	const onMenuClick = () => {
+		if (location.pathname === "/menu") navigate(-1);
+		else navigate("/menu");
+	};
+
+	const onCreateClick = () => {
+		if (location.pathname === "/create") navigate(-1);
+		else navigate("/create");
+	};
 
 	return (
 		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
-			<Show when={auth().user} fallback={<Login />}>
-				<div class="flex flex-col gap-s py-s h-full w-full">
-					<main class="grow px-s overflow-y-scroll">{props.children}</main>
-					<Button class="relative text-3xl z-2" onClick={toggle}>
-						· · ·
-					</Button>
-					<Show when={show()}>
-						<div class="absolute inset-0 z-1 grid place-items-center bg-[var(--background)]">
-							<Navigation onClose={() => setShow(false)} />
+			<Show when={!auth().isLoading}>
+				<Show when={auth().user} fallback={<Login />}>
+					<div class="flex flex-col gap-s py-s h-full w-full">
+						<main class="grow px-s overflow-y-scroll">{props.children}</main>
+						<div class="flex justify-between px-s">
+							<button class="cursor-pointer" onClick={onMenuClick}>
+								<Icon>more_vert</Icon>
+							</button>
+							<button class="cursor-pointer" onClick={onCreateClick}>
+								<Icon>playlist_add</Icon>
+							</button>
 						</div>
-					</Show>
-				</div>
+					</div>
+				</Show>
 			</Show>
 		</div>
-	);
-};
-
-const Navigation: Component<{ onClose: () => void }> = (props) => {
-	return (
-		<nav class="flex flex-col items-center gap-m">
-			<A href="/" class="text-4xl" onClick={props.onClose}>
-				Today
-			</A>
-			<A href="/upcoming" class="text-4xl" onClick={props.onClose}>
-				Upcoming
-			</A>
-			<A href="/create" class="text-4xl" onClick={props.onClose}>
-				Create
-			</A>
-			<Button onClick={() => db.auth.signOut()} class="text-[var(--secondary)]">
-				Sign out
-			</Button>
-		</nav>
 	);
 };
 
