@@ -38,15 +38,15 @@ const Upcoming: Component = () => {
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
-			<div class="flex flex-col gap-l">
+			<div class="flex flex-col gap-[54px]">
 				<For each={Object.entries(itemsByDate())}>
 					{([date, itemGroup]) => {
 						const [weekday, monthDay] = date.split(", ");
 						return (
 							<section class="flex flex-col gap-xs">
 								<header class="flex justify-between px-xs text-[var(--secondary)]">
-									<h2>{weekday}</h2>
-									<h2>{monthDay}</h2>
+									<h2 class="font-medium text-sm">{weekday}</h2>
+									<h2 class="font-light text-xs">{monthDay}</h2>
 								</header>
 								<ul>
 									<For each={itemGroup}>

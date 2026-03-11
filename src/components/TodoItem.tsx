@@ -11,15 +11,14 @@ const TodoItem: Component<{ todo: Item; virtual?: boolean }> = (props) => {
 	const onComplete = () => completeTodo(todo(), auth().user!.id);
 
 	return (
-		<li class="flex items-center justify-between px-xs py-2xs cursor-pointer active:bg-[var(--tertiary)]">
+		<li class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--surface)]">
 			<p>{todo().text}</p>
 			{props.virtual ? (
-				<Icon size={18} class="text-[var(--secondary)]">restart_alt</Icon>
+				<Icon size={16} class="text-[var(--secondary)]">repeat</Icon>
 			) : (
-				<button
-					onClick={onComplete}
-					class="size-[9px] cursor-pointer border-[1px] border-[var(--secondary)] active:bg-[var(--secondary)]"
-				/>
+				<button onClick={onComplete} class="flex text-[var(--secondary)] hover:text-[var(--accent)] cursor-pointer">
+				<Icon size={16}>check_box_outline_blank</Icon>
+			</button>
 			)}
 		</li>
 	);
