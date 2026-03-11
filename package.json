@@ -24,6 +24,7 @@
     "@instantdb/solidjs": "latest",
     "@solidjs/router": "^0.15.4",
     "@thisbeyond/solid-dnd": "^0.7.5",
+    "@vercel/analytics": "^2.0.0",
     "date-fns": "^4.1.0",
     "solid-js": "^1.9.9"
   },

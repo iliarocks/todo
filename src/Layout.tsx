@@ -1,10 +1,12 @@
 import { A, useLocation, useNavigate } from "@solidjs/router";
-import { ParentComponent, Show } from "solid-js";
+import { ParentComponent, Show, onMount } from "solid-js";
+import { inject } from "@vercel/analytics";
 import { db } from "./lib/db";
 import Login from "./pages/Login";
 import Icon from "./components/Icon";
 
 const Layout: ParentComponent = (props) => {
+	onMount(() => inject());
 	const auth = db.useAuth();
 	const location = useLocation();
 	const navigate = useNavigate();
