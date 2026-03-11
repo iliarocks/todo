@@ -61,6 +61,7 @@ const _schema = i.schema({
 				on: "today",
 				has: "one",
 				label: "item",
+				onDelete: "cascade",
 			},
 			reverse: {
 				on: "items",
