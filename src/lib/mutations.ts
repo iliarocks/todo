@@ -1,8 +1,9 @@
 import { id } from "@instantdb/solidjs";
-import { startOfDay } from "date-fns";
+import { parse, startOfDay } from "date-fns";
 import { db } from "./db";
 import { Item } from "./types";
 import { nextOccurrenceDate } from "./repeat";
+import { FormState } from "./formTypes";
 
 export const createTodo = (text: string, date: string, userId: string) => {
 	if (!text || !date) return;
@@ -64,6 +65,53 @@ export const completeTodo = (todo: Item, userId: string) => {
 			db.tx.items[todo.id].delete(),
 		]);
 	}
+};
+
+export const updateItem = (item: Item, form: FormState, userId: string) => {
+	const date = startOfDay(parse(form.date, "yyyy-MM-dd", new Date())).toISOString();
+	const txns: any[] = [];
+
+	if (form.mode === "none") {
+		const updates = {
+			text: form.text,
+			date,
+			...(form.type === "event" && { startTime: form.startTime, endTime: form.endTime }),
+		};
+		txns.push(db.tx.items[item.id].update(updates));
+		if (item.template) txns.push(db.tx.templates[item.template.id].delete());
+	} else {
+		const templateData = {
+			text: form.text,
+			type: form.type,
+			mode: form.mode,
+			interval: form.interval,
+			unit: form.unit,
+			anchor: form.anchor,
+			...(form.type === "event" && { startTime: form.startTime, endTime: form.endTime }),
+		};
+		const itemData = {
+			text: form.text,
+			date,
+			...(form.type === "event" && { startTime: form.startTime, endTime: form.endTime }),
+		};
+
+		if (item.template) {
+			txns.push(db.tx.templates[item.template.id].update(templateData));
+			txns.push(db.tx.items[item.id].update(itemData));
+		} else {
+			const templateId = id();
+			txns.push(db.tx.templates[templateId].create(templateData).link({ user: userId }));
+			txns.push(db.tx.items[item.id].update(itemData).link({ template: templateId }));
+		}
+	}
+
+	db.transact(txns);
+};
+
+export const deleteItem = (item: Item) => {
+	const txns: any[] = [db.tx.items[item.id].delete()];
+	if (item.template) txns.push(db.tx.templates[item.template.id].delete());
+	db.transact(txns);
 };
 
 export const createRepeatingEvent = (

@@ -11,7 +11,10 @@ const Layout: ParentComponent = (props) => {
 	const auth = db.useAuth();
 	const location = useLocation();
 	const navigate = useNavigate();
-	const showClose = () => location.pathname === "/menu" || location.pathname === "/create";
+	const showClose = () =>
+		location.pathname === "/menu" ||
+		location.pathname === "/create" ||
+		location.pathname.startsWith("/edit/");
 
 	return (
 		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
