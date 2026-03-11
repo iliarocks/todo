@@ -34,7 +34,7 @@ const Create: Component = () => {
 			if (form.type === "event") createEvent(form.text, date, form.startTime, form.endTime, userId);
 		} else {
 			if (form.type === "todo")
-				createRepeatingTodo(form.text, date, form.mode, form.interval, form.unit, userId);
+				createRepeatingTodo(form.text, date, form.mode, form.interval, form.unit, form.anchor, userId);
 			if (form.type === "event")
 				createRepeatingEvent(
 					form.text,

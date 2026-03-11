@@ -33,6 +33,7 @@ export const createRepeatingTodo = (
 	mode: "relative" | "absolute",
 	interval: number,
 	unit: "day" | "week" | "month",
+	anchor: string,
 	userId: string,
 ) => {
 	if (!text || !date) return;
@@ -40,7 +41,7 @@ export const createRepeatingTodo = (
 	const templateId = id();
 	db.transact([
 		db.tx.templates[templateId]
-			.create({ text, type: "todo", mode, interval, unit })
+			.create({ text, type: "todo", mode, interval, unit, anchor })
 			.link({ user: userId }),
 		db.tx.items[id()]
 			.create({ type: "todo", text, date })
