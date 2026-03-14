@@ -113,7 +113,7 @@ const Today: Component = () => {
 									{(rawItem) => {
 										const item = parseItem(rawItem());
 										return (
-											<div use:sortable>
+											<div use:sortable class="touch-none select-none">
 												{item.type === "todo" ? (
 													<TodoItem todo={item} />
 												) : (
