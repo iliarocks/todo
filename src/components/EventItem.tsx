@@ -17,7 +17,7 @@ const EventItem: Component<{ event: Item; onEdit?: () => void }> = (props) => {
 
 	return (
 		<li
-			onClick={() => props.onEdit ? props.onEdit() : navigate(`/edit/${event().id}`)}
+			onClick={() => props.onEdit ? props.onEdit() : navigate(`/note/${event().id}`)}
 			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--surface)]"
 			classList={{ "opacity-40": isPast() }}
 		>

@@ -13,6 +13,7 @@ export type Unit = (typeof UNITS)[number];
 export type FormState = {
 	type: ItemType;
 	text: string;
+	notes: string;
 	date: Temporal.PlainDate;
 	start?: Temporal.PlainTime;
 	end?: Temporal.PlainTime;

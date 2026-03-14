@@ -14,7 +14,7 @@ const TodoItem: Component<{ todo: Item; virtual?: boolean; onEdit?: () => void }
 
 	return (
 		<li
-			onClick={() => props.onEdit ? props.onEdit() : (!props.virtual && navigate(`/edit/${todo().id}`))}
+			onClick={() => props.onEdit ? props.onEdit() : (!props.virtual && navigate(`/note/${todo().id}`))}
 			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--surface)]"
 		>
 			<p>{todo().text}</p>

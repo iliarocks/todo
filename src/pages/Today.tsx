@@ -61,6 +61,12 @@ const Today: Component = () => {
 			if (!entry.item) return [];
 
 			const item = parseItem(entry.item);
+
+			// Remove today-record for items rescheduled to a future date
+			if (Temporal.PlainDate.compare(item.date, today()) > 0) {
+				return [db.tx.today[entry.id].delete()];
+			}
+
 			if (item.type !== "event" || Temporal.PlainDate.compare(item.date, today()) >= 0) return [];
 
 			const deleteOp = db.tx.items[item.id].delete();

@@ -32,6 +32,7 @@ const Edit: Component = () => {
 	const [form, setForm] = createStore<FormState>({
 		type: "todo",
 		text: "",
+		notes: "",
 		date: today(),
 		start: now(),
 		end: now(),
@@ -50,6 +51,7 @@ const Edit: Component = () => {
 			setForm({
 				type: i.type as ItemType,
 				text: i.text,
+				notes: i.notes ?? t?.notes ?? "",
 				date: i.date,
 				start: i.start,
 				end: i.end,
@@ -108,6 +110,12 @@ const Edit: Component = () => {
 					value={form.text}
 					onInput={(e) => setForm({ text: e.currentTarget.value })}
 					required
+				/>
+				<textarea
+					placeholder="Notes"
+					value={form.notes}
+					onInput={(e) => setForm({ notes: e.currentTarget.value })}
+					class="p-s rounded-lg bg-[var(--surface)] resize-none field-sizing-content min-h-[2.5rem]"
 				/>
 				<section class="flex flex-col gap-xs">
 					<p class="text-xs text-[var(--secondary)]">WHEN</p>

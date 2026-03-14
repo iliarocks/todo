@@ -18,6 +18,7 @@ const _schema = i.schema({
 			date: i.string().indexed(),
 			start: i.string().optional(),
 			end: i.string().optional(),
+			notes: i.string().optional(),
 		}),
 		templates: i.entity({
 			type: i.string(),
@@ -28,6 +29,7 @@ const _schema = i.schema({
 			anchor: i.string(),
 			start: i.string().optional(),
 			end: i.string().optional(),
+			notes: i.string().optional(),
 		}),
 		today: i.entity({
 			order: i.number().indexed(),

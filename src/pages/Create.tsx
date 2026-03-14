@@ -25,9 +25,9 @@ const Create: Component = () => {
 		const user = auth().user;
 		if (!user) return;
 
-		if (form.type === "todo") createTodo(text, date, mode, interval, unit, anchor, user);
+		if (form.type === "todo") createTodo(text, form.notes, date, mode, interval, unit, anchor, user);
 		if (form.type === "event")
-			createEvent(text, date, start, end, mode, interval, unit, anchor, user);
+			createEvent(text, form.notes, date, start, end, mode, interval, unit, anchor, user);
 
 		navigate(-1);
 	};
@@ -50,6 +50,12 @@ const Create: Component = () => {
 				value={form.text}
 				onInput={(e) => setForm({ text: e.currentTarget.value })}
 				required
+			/>
+			<textarea
+				placeholder="Notes"
+				value={form.notes}
+				onInput={(e) => setForm({ notes: e.currentTarget.value })}
+				class="p-s rounded-lg bg-[var(--surface)] resize-none field-sizing-content min-h-[2.5rem]"
 			/>
 			<section class="flex flex-col gap-xs">
 				<p class="text-xs text-[var(--secondary)]">WHEN</p>
@@ -84,6 +90,7 @@ const Create: Component = () => {
 const defaultForm = (type: FormState["type"]): FormState => ({
 	type,
 	text: "",
+	notes: "",
 	date: today(),
 	start: now(),
 	end: now(),

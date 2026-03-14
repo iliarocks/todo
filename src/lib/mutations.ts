@@ -7,6 +7,7 @@ import { Temporal } from "temporal-polyfill";
 
 export const createTodo = (
 	text: string,
+	notes: string,
 	date: Temporal.PlainDate,
 	mode: Mode,
 	interval: number,
@@ -18,13 +19,13 @@ export const createTodo = (
 	const itemId = id();
 
 	const transactions: any[] = [
-		db.tx.items[itemId].create({ type, text, date: date.toString() }).link({ user: user.id }),
+		db.tx.items[itemId].create({ type, text, notes: notes || undefined, date: date.toString() }).link({ user: user.id }),
 	];
 
 	if (mode !== "none") {
 		transactions.push(
 			db.tx.templates[id()]
-				.create({ type, text, mode, interval, unit, anchor })
+				.create({ type, text, notes: notes || undefined, mode, interval, unit, anchor })
 				.link({ user: user.id, instance: itemId }),
 		);
 	}
@@ -34,6 +35,7 @@ export const createTodo = (
 
 export const createEvent = (
 	text: string,
+	notes: string,
 	date: Temporal.PlainDate,
 	start: Temporal.PlainTime | undefined,
 	end: Temporal.PlainTime | undefined,
@@ -48,7 +50,7 @@ export const createEvent = (
 
 	const transactions: any[] = [
 		db.tx.items[itemId]
-			.create({ type, text, date: date.toString(), start: start?.toString(), end: end?.toString() })
+			.create({ type, text, notes: notes || undefined, date: date.toString(), start: start?.toString(), end: end?.toString() })
 			.link({ user: user.id }),
 	];
 
@@ -58,6 +60,7 @@ export const createEvent = (
 				.create({
 					type,
 					text,
+					notes: notes || undefined,
 					start: start?.toString(),
 					end: end?.toString(),
 					mode,
@@ -80,7 +83,7 @@ export const completeTodo = (todo: Item, user: { id: string }, template?: Templa
 		const newDate = nextDate(date, template);
 		db.transact([
 			db.tx.items[id()]
-				.create({ type, text, date: newDate.toString() })
+				.create({ type, text, notes: template.notes || undefined, date: newDate.toString() })
 				.link({ user: user.id, template: template.id }),
 		]);
 	}
@@ -90,11 +93,12 @@ export const completeTodo = (todo: Item, user: { id: string }, template?: Templa
 
 export const updateInstance = (
 	item: { id: string },
-	{ text, date, start, end }: { text: string; date: Temporal.PlainDate; start?: Temporal.PlainTime; end?: Temporal.PlainTime },
+	{ text, notes, date, start, end }: { text: string; notes: string; date: Temporal.PlainDate; start?: Temporal.PlainTime; end?: Temporal.PlainTime },
 ) => {
 	db.transact([
 		db.tx.items[item.id].update({
 			text,
+			notes: notes || undefined,
 			date: date.toString(),
 			start: start?.toString(),
 			end: end?.toString(),
@@ -104,12 +108,13 @@ export const updateInstance = (
 
 export const updateTemplate = (
 	template: { id: string },
-	form: { type: string; text: string; start?: Temporal.PlainTime; end?: Temporal.PlainTime; mode: Mode; interval: number; unit: Unit; anchor: string },
+	form: { type: string; text: string; notes: string; start?: Temporal.PlainTime; end?: Temporal.PlainTime; mode: Mode; interval: number; unit: Unit; anchor: string },
 ) => {
 	db.transact([
 		db.tx.templates[template.id].update({
 			type: form.type,
 			text: form.text,
+			notes: form.notes || undefined,
 			start: form.start?.toString(),
 			end: form.end?.toString(),
 			mode: form.mode,
@@ -123,7 +128,7 @@ export const updateTemplate = (
 // For non-repeating items: updates item fields and handles creating/updating/deleting the template
 export const updateItem = (
 	item: { id: string },
-	form: { type: string; text: string; date: Temporal.PlainDate; start?: Temporal.PlainTime; end?: Temporal.PlainTime; mode: Mode; interval: number; unit: Unit; anchor: string },
+	form: { type: string; text: string; notes: string; date: Temporal.PlainDate; start?: Temporal.PlainTime; end?: Temporal.PlainTime; mode: Mode; interval: number; unit: Unit; anchor: string },
 	template: Template | undefined,
 	user: { id: string },
 ) => {
@@ -131,6 +136,7 @@ export const updateItem = (
 		db.tx.items[item.id].update({
 			type: form.type,
 			text: form.text,
+			notes: form.notes || undefined,
 			date: form.date.toString(),
 			start: form.start?.toString(),
 			end: form.end?.toString(),
@@ -143,6 +149,7 @@ export const updateItem = (
 				db.tx.templates[template.id].update({
 					type: form.type,
 					text: form.text,
+					notes: form.notes || undefined,
 					mode: form.mode,
 					interval: form.interval,
 					unit: form.unit,
@@ -160,6 +167,7 @@ export const updateItem = (
 				.create({
 					type: form.type,
 					text: form.text,
+					notes: form.notes || undefined,
 					mode: form.mode,
 					interval: form.interval,
 					unit: form.unit,
@@ -181,6 +189,7 @@ export const skipInstance = (item: Item, template: Template, user: { id: string 
 			.create({
 				type: template.type,
 				text: template.text,
+				notes: template.notes || undefined,
 				date: newDate.toString(),
 				start: template.start?.toString(),
 				end: template.end?.toString(),

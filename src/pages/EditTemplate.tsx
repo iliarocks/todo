@@ -27,6 +27,7 @@ const EditTemplate: Component = () => {
 	const [form, setForm] = createStore<FormState>({
 		type: "todo",
 		text: "",
+		notes: "",
 		date: Temporal.Now.plainDateISO(),
 		mode: "none",
 		interval: 1,
@@ -42,6 +43,7 @@ const EditTemplate: Component = () => {
 			setForm({
 				type: t.type as ItemType,
 				text: t.text,
+				notes: t.notes ?? "",
 				start: t.start,
 				end: t.end,
 				mode: t.mode as Mode,
@@ -88,6 +90,12 @@ const EditTemplate: Component = () => {
 					value={form.text}
 					onInput={(e) => setForm({ text: e.currentTarget.value })}
 					required
+				/>
+				<textarea
+					placeholder="Notes"
+					value={form.notes}
+					onInput={(e) => setForm({ notes: e.currentTarget.value })}
+					class="p-s rounded-lg bg-[var(--surface)] resize-none field-sizing-content min-h-[2.5rem]"
 				/>
 				<Show when={form.type === "event"}>
 					<section class="flex flex-col gap-xs">

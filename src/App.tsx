@@ -5,6 +5,7 @@ import Create from "./pages/Create";
 import Today from "./pages/Today";
 import Edit from "./pages/Edit";
 import EditTemplate from "./pages/EditTemplate";
+import Note from "./pages/Note";
 import Navigation from "./pages/Navigation";
 import Layout from "./Layout";
 
@@ -16,6 +17,7 @@ const App: Component = () => {
 			<Route path="/create" component={Create} />
 			<Route path="/edit/:id" component={Edit} />
 			<Route path="/edit/template/:id" component={EditTemplate} />
+			<Route path="/note/:id" component={Note} />
 			<Route path="/menu" component={Navigation} />
 		</Router>
 	);

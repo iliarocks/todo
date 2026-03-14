@@ -14,7 +14,12 @@ const Layout: ParentComponent = (props) => {
 	const showClose = () =>
 		location.pathname === "/menu" ||
 		location.pathname === "/create" ||
-		location.pathname.startsWith("/edit/");
+		location.pathname.startsWith("/edit/") ||
+		location.pathname.startsWith("/note/");
+	const noteId = () => {
+		const m = location.pathname.match(/^\/note\/(.+)$/);
+		return m ? m[1] : null;
+	};
 
 	return (
 		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
@@ -24,6 +29,13 @@ const Layout: ParentComponent = (props) => {
 						<main class="grow px-s overflow-y-scroll">{props.children}</main>
 						<div class="flex justify-center gap-l px-s">
 						<Show when={showClose()}>
+							<Show when={noteId()}>
+								{(nid) => (
+									<Button onClick={() => navigate(`/edit/${nid()}`)}>
+										<Icon>edit</Icon>
+									</Button>
+								)}
+							</Show>
 							<Button onClick={() => navigate(-1)}>
 								<Icon>close</Icon>
 							</Button>
