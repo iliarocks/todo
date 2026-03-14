@@ -1,27 +1,27 @@
-import {
-	addDays,
-	endOfMonth,
-	endOfToday,
-	format,
-	max,
-	min,
-	startOfMonth,
-	startOfToday,
-	startOfWeek,
-} from "date-fns";
 import { Component, For, Show } from "solid-js";
+import { useNavigate } from "@solidjs/router";
+import { Temporal } from "temporal-polyfill";
 import { db } from "../lib/db";
-import { advanceDate } from "../lib/repeat";
+import { advanceDate, parseItem, parseTemplate, today, toDate } from "../lib/dates";
 import TodoItem from "../components/TodoItem";
 import EventItem from "../components/EventItem";
-import { Item, Template } from "../lib/types";
+import { Item, RawTemplate, Template } from "../lib/types";
+
+const VIRTUAL_PREFIX = "virtual-";
+const UUID_LENGTH = 36;
+const templateIdFromVirtualId = (id: string) =>
+	id.slice(VIRTUAL_PREFIX.length, VIRTUAL_PREFIX.length + UUID_LENGTH);
 
 const Upcoming: Component = () => {
+	const navigate = useNavigate();
 	const state = db.useQuery({
 		items: {
 			$: {
 				where: {
-					and: [{ date: { $gte: endOfToday() } }, { date: { $lte: addDays(endOfToday(), 13) } }],
+					and: [
+						{ date: { $gte: today().add({ days: 1 }).toString() } },
+						{ date: { $lte: today().add({ days: 13 }).toString() } },
+					],
 				},
 			},
 			template: {},
@@ -30,11 +30,16 @@ const Upcoming: Component = () => {
 			instance: {},
 		},
 	});
-	const realItems = () => state().data?.items ?? [];
+	const realItems = () => (state().data?.items ?? []).map(parseItem);
 	const virtualItems = () => generateVirtualItems(state().data?.templates ?? []);
 	const items = () =>
-		[...realItems(), ...virtualItems()].sort((a, b) => a.date.getTime() - b.date.getTime());
-	const itemsByDate = () => Object.groupBy(items(), (item) => format(item.date, "EEEE, MMMM d"));
+		[...realItems(), ...virtualItems()].sort((a, b) =>
+			Temporal.PlainDate.compare(a.date, b.date),
+		);
+	const itemsByDate = () =>
+		Object.groupBy(items(), (item) =>
+			item.date.toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric" }),
+		);
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
@@ -50,13 +55,17 @@ const Upcoming: Component = () => {
 								</header>
 								<ul>
 									<For each={itemGroup}>
-										{(item) =>
-											item.type === "todo" ? (
-												<TodoItem todo={item} virtual={item.id.startsWith("virtual-")} />
+										{(item) => {
+											const isVirtual = item.id.startsWith(VIRTUAL_PREFIX);
+											const onEdit = isVirtual
+												? () => navigate(`/edit/template/${templateIdFromVirtualId(item.id)}`)
+												: undefined;
+											return item.type === "todo" ? (
+												<TodoItem todo={item} virtual={isVirtual} onEdit={onEdit} />
 											) : (
-												<EventItem event={item} />
-											)
-										}
+												<EventItem event={item} onEdit={onEdit} />
+											);
+										}}
 									</For>
 								</ul>
 							</section>
@@ -68,23 +77,28 @@ const Upcoming: Component = () => {
 	);
 };
 
-const virtualItem = (template: Template, date: Date): Item => ({
-	id: `virtual-${template.id}-${date.getTime()}`,
+const virtualItem = (template: Template, date: Temporal.PlainDate): Item => ({
+	id: `virtual-${template.id}-${date.toString()}`,
 	type: template.type,
 	text: template.text,
 	date,
-	startTime: template.startTime,
-	endTime: template.endTime,
-	template: template,
+	start: template.start,
+	end: template.end,
 });
 
-const generateVirtualItems = (templates: Template[]): Item[] => {
-	const start = endOfToday();
-	const end = addDays(start, 13);
+type RawTemplateWithInstance = RawTemplate & { instance?: { date: string } };
+
+const generateVirtualItems = (rawTemplates: RawTemplateWithInstance[]): Item[] => {
+	const start = today().add({ days: 1 });
+	const end = today().add({ days: 13 });
 	const items: Item[] = [];
 
-	for (const template of templates) {
-		const referenceDate = max([template.instance!.date, startOfToday()]);
+	for (const raw of rawTemplates) {
+		if (!raw.instance?.date) continue;
+		const template = parseTemplate(raw);
+		const instanceDate = toDate(raw.instance.date);
+		const referenceDate =
+			Temporal.PlainDate.compare(instanceDate, start) > 0 ? instanceDate : start;
 
 		if (template.mode === "relative") {
 			const date = advanceDate(referenceDate, template.interval, template.unit);
@@ -92,23 +106,28 @@ const generateVirtualItems = (templates: Template[]): Item[] => {
 		}
 
 		if (template.mode === "absolute") {
+			const anchors = template.anchor.split(" ").map(Number);
+
 			if (template.unit === "day") {
 				let date = advanceDate(referenceDate, template.interval, "day");
-				while (date <= end) {
-					if (date >= start) items.push(virtualItem(template, date));
+				while (Temporal.PlainDate.compare(date, end) <= 0) {
+					if (Temporal.PlainDate.compare(date, start) >= 0)
+						items.push(virtualItem(template, date));
 					date = advanceDate(date, template.interval, "day");
 				}
 			}
 
-			const anchors = template.anchor!.split(" ").map(Number);
-
 			if (template.unit === "week") {
-				let week = startOfWeek(referenceDate);
-
-				while (week <= end) {
+				// Start of week (Sunday): dayOfWeek is 1=Mon..7=Sun, so subtract dayOfWeek%7 to reach Sunday
+				let week = referenceDate.subtract({ days: referenceDate.dayOfWeek % 7 });
+				while (Temporal.PlainDate.compare(week, end) <= 0) {
 					for (const day of anchors) {
-						const date = addDays(week, day);
-						if (date >= start && date <= end && date > referenceDate) {
+						const date = week.add({ days: day });
+						if (
+							Temporal.PlainDate.compare(date, start) >= 0 &&
+							Temporal.PlainDate.compare(date, end) <= 0 &&
+							Temporal.PlainDate.compare(date, referenceDate) > 0
+						) {
 							items.push(virtualItem(template, date));
 						}
 					}
@@ -117,12 +136,15 @@ const generateVirtualItems = (templates: Template[]): Item[] => {
 			}
 
 			if (template.unit === "month") {
-				let month = startOfMonth(referenceDate);
-
-				while (month <= end) {
+				let month = referenceDate.with({ day: 1 });
+				while (Temporal.PlainDate.compare(month, end) <= 0) {
 					for (const day of anchors) {
-						const date = min([addDays(month, day), endOfMonth(month)]);
-						if (date >= start && date <= end && date > referenceDate) {
+						const date = month.with({ day: Math.min(day + 1, month.daysInMonth) });
+						if (
+							Temporal.PlainDate.compare(date, start) >= 0 &&
+							Temporal.PlainDate.compare(date, end) <= 0 &&
+							Temporal.PlainDate.compare(date, referenceDate) > 0
+						) {
 							items.push(virtualItem(template, date));
 						}
 					}

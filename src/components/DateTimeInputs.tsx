@@ -1,37 +1,43 @@
 import { Component, Show } from "solid-js";
-import { SetStoreFunction } from "solid-js/store";
+import { Temporal } from "temporal-polyfill";
 import Input from "./Input";
-import { FormState } from "../lib/formTypes";
+import { ItemType } from "../lib/form";
+import { today } from "../lib/dates";
 
 const DateTimeInputs: Component<{
-	type: "todo" | "event";
-	date: string;
-	startTime: string;
-	endTime: string;
-	setForm: SetStoreFunction<FormState>;
+	type: ItemType;
+	date: Temporal.PlainDate;
+	end: Temporal.PlainTime | undefined;
+	start: Temporal.PlainTime | undefined;
+	setDate: (date: Temporal.PlainDate) => void;
+	setStart: (start: Temporal.PlainTime | undefined) => void;
+	setEnd: (end: Temporal.PlainTime | undefined) => void;
 }> = (props) => {
-	const isEvent = () => props.type === "event";
-
 	return (
 		<div class="flex gap-xs">
 			<Input
 				type="date"
-				value={props.date}
-				onInput={(e) => props.setForm({ date: e.currentTarget.value })}
+				value={props.date.toString()}
+				min={today().toString()}
+				onInput={(e) => props.setDate(Temporal.PlainDate.from(e.currentTarget.value))}
 				required
 			/>
-			<Show when={isEvent()}>
+			<Show when={props.type === "event"}>
 				<Input
 					type="time"
-					value={props.startTime}
-					onInput={(e) => props.setForm({ startTime: e.currentTarget.value })}
-					required
+					value={props.start?.toString() ?? ""}
+					onInput={(e) => {
+						const value = e.currentTarget.value;
+						props.setStart(value ? Temporal.PlainTime.from(value) : undefined);
+					}}
 				/>
 				<Input
 					type="time"
-					value={props.endTime}
-					onInput={(e) => props.setForm({ endTime: e.currentTarget.value })}
-					required
+					value={props.end?.toString() ?? ""}
+					onInput={(e) => {
+						const value = e.currentTarget.value;
+						props.setEnd(value ? Temporal.PlainTime.from(value) : undefined);
+					}}
 				/>
 			</Show>
 		</div>

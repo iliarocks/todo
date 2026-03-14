@@ -1,16 +1,18 @@
 import { Component, Show } from "solid-js";
-import { SetStoreFunction } from "solid-js/store";
 import Input from "./Input";
 import ToggleSelect from "./ToggleButton";
-import { FormState, FormType, Mode, MODES, UNITS, WEEK_DAYS, MONTH_DAYS } from "../lib/formTypes";
+import { Mode, MODES, UNITS, WEEK_DAYS, MONTH_DAYS, Unit, ItemType } from "../lib/form";
 
 const RepeatInputs: Component<{
-	type: FormType;
+	type: ItemType;
 	mode: Mode;
 	interval: number;
-	unit: string;
+	unit: Unit;
 	anchor: string;
-	setForm: SetStoreFunction<FormState>;
+	setMode: (mode: Mode) => void;
+	setInterval: (interval: number) => void;
+	setUnit: (unit: Unit) => void;
+	setAnchor: (anchor: string) => void;
 }> = (props) => {
 	const modes = () => (props.type === "event" ? MODES.slice(0, -1) : MODES);
 	const anchorSelected = () => (props.anchor ? props.anchor.split(" ").map(Number) : [0]);
@@ -23,7 +25,8 @@ const RepeatInputs: Component<{
 				selected={[modes().indexOf(props.mode)]}
 				onSelect={([i]) => {
 					const mode = modes()[i];
-					props.setForm({ mode, anchor: mode === "absolute" && props.unit !== "day" ? "0" : "" });
+					props.setMode(mode);
+					props.setAnchor(mode === "absolute" && props.unit !== "day" ? "0" : "");
 				}}
 				single
 			/>
@@ -33,7 +36,7 @@ const RepeatInputs: Component<{
 					<Input
 						type="number"
 						value={props.interval}
-						onInput={(e) => props.setForm({ interval: Number(e.currentTarget.value) })}
+						onInput={(e) => props.setInterval(Number(e.currentTarget.value))}
 						class="py-xs w-12 text-center"
 						required
 					/>
@@ -43,7 +46,8 @@ const RepeatInputs: Component<{
 							selected={[UNITS.indexOf(props.unit as any)]}
 							onSelect={([i]) => {
 								const unit = UNITS[i];
-								props.setForm({ unit, anchor: unit === "day" ? "" : "0" });
+								props.setUnit(unit);
+								props.setAnchor(unit === "day" ? "" : "0");
 							}}
 							single
 						/>
@@ -54,7 +58,7 @@ const RepeatInputs: Component<{
 				<ToggleSelect
 					options={props.unit === "week" ? WEEK_DAYS : MONTH_DAYS}
 					selected={anchorSelected()}
-					onSelect={(indices) => props.setForm({ anchor: indices.join(" ") })}
+					onSelect={(indices) => props.setAnchor(indices.join(" "))}
 					cols={props.unit === "month" ? 7 : undefined}
 				/>
 			</Show>

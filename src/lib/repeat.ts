@@ -1,54 +1,38 @@
-import {
-	addDays,
-	addMonths,
-	addWeeks,
-	endOfMonth,
-	max,
-	min,
-	startOfMonth,
-	startOfToday,
-	startOfWeek,
-} from "date-fns";
+import { Template } from "./types";
+import { Temporal } from "temporal-polyfill";
+import { advanceDate } from "./dates";
 
-export const advanceDate = (date: Date, interval: number, unit: string): Date => {
-	if (unit === "week") return addWeeks(date, interval);
-	if (unit === "month") return addMonths(date, interval);
-	return addDays(date, interval);
-};
+export const nextDate = (
+	instanceDate: Temporal.PlainDate,
+	template: Template,
+): Temporal.PlainDate => {
+	const today = Temporal.Now.plainDateISO();
+	const referenceDate = Temporal.PlainDate.compare(instanceDate, today) > 0 ? instanceDate : today;
+	const { mode, interval, unit, anchor } = template;
 
-export const nextOccurrenceDate = (
-	config: { mode: string; interval: number; unit: string; anchor?: string | null },
-	instanceDate: Date,
-): Date => {
-	const referenceDate = max([instanceDate, startOfToday()]);
-
-	if (config.mode === "relative" || config.unit === "day") {
-		return advanceDate(referenceDate, config.interval, config.unit);
+	if (mode === "relative" || unit === "day") {
+		return advanceDate(referenceDate, interval, unit);
 	}
 
-	const anchors = (config.anchor ?? "0")
-		.split(" ")
-		.map(Number)
-		.sort((a, b) => a - b);
+	const anchors = anchor.split(" ").map(Number)
 
-	if (config.unit === "week") {
-		let week = startOfWeek(referenceDate);
+	if (unit === "week") {
+		let week = referenceDate.subtract({ days: referenceDate.dayOfWeek - 1 });
 		while (true) {
 			for (const day of anchors) {
-				const date = addDays(week, day);
-				if (date > referenceDate) return date;
+				const date = week.add({ days: day });
+				if (Temporal.PlainDate.compare(date, referenceDate) > 0) return date;
 			}
-			week = addWeeks(week, config.interval);
+			week = week.add({ weeks: interval });
 		}
 	} else {
-		// month
-		let month = startOfMonth(referenceDate);
+		let month = referenceDate.with({ day: 1 });
 		while (true) {
 			for (const day of anchors) {
-				const date = min([addDays(month, day), endOfMonth(month)]);
-				if (date > referenceDate) return date;
+				const date = month.with({ day: Math.min(day + 1, month.daysInMonth) });
+				if (Temporal.PlainDate.compare(date, referenceDate) > 0) return date;
 			}
-			month = addMonths(month, config.interval);
+			month = month.add({ months: interval });
 		}
 	}
 };

@@ -5,7 +5,7 @@ import { Item } from "../lib/types";
 import { completeTodo } from "../lib/mutations";
 import Icon from "./Icon";
 
-const TodoItem: Component<{ todo: Item; virtual?: boolean }> = (props) => {
+const TodoItem: Component<{ todo: Item; virtual?: boolean; onEdit?: () => void }> = (props) => {
 	const auth = db.useAuth();
 	const navigate = useNavigate();
 	const todo = () => props.todo;
@@ -14,7 +14,7 @@ const TodoItem: Component<{ todo: Item; virtual?: boolean }> = (props) => {
 
 	return (
 		<li
-			onClick={() => !props.virtual && navigate(`/edit/${todo().id}`)}
+			onClick={() => props.onEdit ? props.onEdit() : (!props.virtual && navigate(`/edit/${todo().id}`))}
 			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--surface)]"
 		>
 			<p>{todo().text}</p>
@@ -23,6 +23,7 @@ const TodoItem: Component<{ todo: Item; virtual?: boolean }> = (props) => {
 			) : (
 				<button
 					onClick={(e) => { e.stopPropagation(); onComplete(); }}
+					onPointerDown={(e) => e.stopPropagation()}
 					class="flex text-[var(--secondary)] hover:text-[var(--accent)] cursor-pointer"
 				>
 					<Icon size={16}>check_box_outline_blank</Icon>

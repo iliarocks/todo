@@ -1,24 +1,19 @@
 import { type Component } from "solid-js";
-import { format, parse, startOfDay } from "date-fns";
+import { useNavigate } from "@solidjs/router";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import { createStore } from "solid-js/store";
 import ToggleSelect from "../components/ToggleButton";
-import {
-	createEvent,
-	createRepeatingEvent,
-	createRepeatingTodo,
-	createTodo,
-} from "../lib/mutations";
+import { createEvent, createTodo } from "../lib/mutations";
 import { db } from "../lib/db";
 import DateTimeInputs from "../components/DateTimeInputs";
 import RepeatInputs from "../components/RepeatInputs";
-import { FormState } from "../lib/formTypes";
-
-const TYPES = ["todo", "event"] as const;
+import { FormState, TYPES } from "../lib/form";
+import { now, today } from "../lib/dates";
 
 const Create: Component = () => {
 	const auth = db.useAuth();
+	const navigate = useNavigate();
 	const [form, setForm] = createStore<FormState>(defaultForm("todo"));
 
 	const resetForm = (type: FormState["type"]) => setForm(defaultForm(type));
@@ -26,30 +21,15 @@ const Create: Component = () => {
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 
-		const userId = auth().user!.id;
-		const date = startOfDay(parse(form.date, "yyyy-MM-dd", new Date())).toISOString();
+		const { text, date, start, end, mode, interval, unit, anchor } = form;
+		const user = auth().user;
+		if (!user) return;
 
-		if (form.mode === "none") {
-			if (form.type === "todo") createTodo(form.text, date, userId);
-			if (form.type === "event") createEvent(form.text, date, form.startTime, form.endTime, userId);
-		} else {
-			if (form.type === "todo")
-				createRepeatingTodo(form.text, date, form.mode, form.interval, form.unit, form.anchor, userId);
-			if (form.type === "event")
-				createRepeatingEvent(
-					form.text,
-					date,
-					form.mode,
-					form.interval,
-					form.unit,
-					form.anchor,
-					form.startTime,
-					form.endTime,
-					userId,
-				);
-		}
+		if (form.type === "todo") createTodo(text, date, mode, interval, unit, anchor, user);
+		if (form.type === "event")
+			createEvent(text, date, start, end, mode, interval, unit, anchor, user);
 
-		resetForm(form.type);
+		navigate(-1);
 	};
 
 	return (
@@ -75,9 +55,11 @@ const Create: Component = () => {
 				<DateTimeInputs
 					type={form.type}
 					date={form.date}
-					startTime={form.startTime}
-					endTime={form.endTime}
-					setForm={setForm}
+					start={form.start}
+					end={form.end}
+					setDate={(date) => setForm({ date })}
+					setStart={(start) => setForm({ start })}
+					setEnd={(end) => setForm({ end })}
 				/>
 			</section>
 			<section class="flex flex-col gap-xs">
@@ -88,7 +70,10 @@ const Create: Component = () => {
 					interval={form.interval}
 					unit={form.unit}
 					anchor={form.anchor}
-					setForm={setForm}
+					setMode={(mode) => setForm({ mode })}
+					setInterval={(interval) => setForm({ interval })}
+					setUnit={(unit) => setForm({ unit })}
+					setAnchor={(anchor) => setForm({ anchor })}
 				/>
 			</section>
 		</form>
@@ -98,9 +83,9 @@ const Create: Component = () => {
 const defaultForm = (type: FormState["type"]): FormState => ({
 	type,
 	text: "",
-	date: format(new Date(), "yyyy-MM-dd"),
-	startTime: format(new Date(), "HH:mm"),
-	endTime: format(new Date(), "HH:mm"),
+	date: today(),
+	start: now(),
+	end: now(),
 	mode: "none",
 	interval: 1,
 	unit: "day",

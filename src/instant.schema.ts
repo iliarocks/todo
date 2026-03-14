@@ -10,15 +10,14 @@ const _schema = i.schema({
 		}),
 		$users: i.entity({
 			email: i.string().unique().indexed().optional(),
-			imageURL: i.string().optional(),
 			type: i.string().optional(),
 		}),
 		items: i.entity({
 			type: i.string().indexed(),
 			text: i.string().indexed(),
-			date: i.date().indexed(),
-			startTime: i.string().optional(),
-			endTime: i.string().optional(),
+			date: i.string().indexed(),
+			start: i.string().optional(),
+			end: i.string().optional(),
 		}),
 		templates: i.entity({
 			type: i.string(),
@@ -26,67 +25,39 @@ const _schema = i.schema({
 			mode: i.string(),
 			interval: i.number(),
 			unit: i.string(),
-			anchor: i.string().optional(),
-			startTime: i.string().optional(),
-			endTime: i.string().optional(),
+			anchor: i.string(),
+			start: i.string().optional(),
+			end: i.string().optional(),
 		}),
 		today: i.entity({
 			order: i.number().indexed(),
 		}),
-		log: i.entity({
-			type: i.string(),
-			text: i.string(),
-			date: i.date(),
-		}),
 	},
 	links: {
 		userItems: {
-			forward: { on: "$users", has: "many", label: "items" },
-			reverse: { on: "items", has: "one", label: "user" },
+			forward: { on: "items", has: "one", label: "user", onDelete: "cascade", required: true },
+			reverse: { on: "$users", has: "many", label: "items" },
 		},
 		userTemplates: {
-			forward: { on: "$users", has: "many", label: "templates" },
-			reverse: { on: "templates", has: "one", label: "user" },
+			forward: { on: "templates", has: "one", label: "user", onDelete: "cascade", required: true },
+			reverse: { on: "$users", has: "many", label: "templates" },
 		},
 		userToday: {
-			forward: { on: "$users", has: "many", label: "today" },
-			reverse: { on: "today", has: "one", label: "user" },
-		},
-		userLog: {
-			forward: { on: "$users", has: "many", label: "log" },
-			reverse: { on: "log", has: "one", label: "user" },
+			forward: { on: "today", has: "one", label: "user", onDelete: "cascade", required: true },
+			reverse: { on: "$users", has: "many", label: "today" },
 		},
 		todayItem: {
-			forward: {
-				on: "today",
-				has: "one",
-				label: "item",
-				onDelete: "cascade",
-			},
-			reverse: {
-				on: "items",
-				has: "one",
-				label: "today",
-			},
+			forward: { on: "today", has: "one", label: "item", onDelete: "cascade" },
+			reverse: { on: "items", has: "one", label: "today" },
 		},
-		templateItem: {
-			forward: {
-				on: "templates",
-				has: "one",
-				label: "instance",
-				required: true,
-			},
-			reverse: {
-				on: "items",
-				has: "one",
-				label: "template",
-			},
+		templateInstance: {
+			forward: { on: "templates", has: "one", label: "instance" },
+			reverse: { on: "items", has: "one", label: "template" },
 		},
 	},
 	rooms: {},
 });
 
-// This helps TypeScript display nicer intellisense
 type _AppSchema = typeof _schema;
 interface AppSchema extends _AppSchema {}
 const schema: AppSchema = _schema;
