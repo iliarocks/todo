@@ -43,6 +43,10 @@ const Upcoming: Component = () => {
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
+			<Show
+				when={items().length > 0}
+				fallback={<div class="flex h-full items-center justify-center"><p class="text-[var(--secondary)] text-sm">Enjoy the calm — nothing's coming.</p></div>}
+			>
 			<div class="flex flex-col gap-[54px]">
 				<For each={Object.entries(itemsByDate())}>
 					{([date, itemGroup]) => {
@@ -73,6 +77,7 @@ const Upcoming: Component = () => {
 					}}
 				</For>
 			</div>
+			</Show>
 		</Show>
 	);
 };
@@ -118,8 +123,7 @@ const generateVirtualItems = (rawTemplates: RawTemplateWithInstance[]): Item[] =
 			}
 
 			if (template.unit === "week") {
-				// Start of week (Sunday): dayOfWeek is 1=Mon..7=Sun, so subtract dayOfWeek%7 to reach Sunday
-				let week = referenceDate.subtract({ days: referenceDate.dayOfWeek % 7 });
+					let week = referenceDate.subtract({ days: referenceDate.dayOfWeek - 1 });
 				while (Temporal.PlainDate.compare(week, end) <= 0) {
 					for (const day of anchors) {
 						const date = week.add({ days: day });

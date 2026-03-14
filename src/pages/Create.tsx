@@ -44,6 +44,7 @@ const Create: Component = () => {
 				<Button type="submit">Save</Button>
 			</section>
 			<Input
+				autofocus
 				type="text"
 				placeholder="Text"
 				value={form.text}

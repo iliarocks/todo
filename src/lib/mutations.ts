@@ -174,6 +174,22 @@ export const updateItem = (
 	db.transact(transactions);
 };
 
+export const skipInstance = (item: Item, template: Template, user: { id: string }) => {
+	const newDate = nextDate(item.date, template);
+	db.transact([
+		db.tx.items[id()]
+			.create({
+				type: template.type,
+				text: template.text,
+				date: newDate.toString(),
+				start: template.start?.toString(),
+				end: template.end?.toString(),
+			})
+			.link({ user: user.id, template: template.id }),
+		db.tx.items[item.id].delete(),
+	]);
+};
+
 export const deleteItem = (item: Item) => {
 	db.transact([db.tx.items[item.id].delete()]);
 };

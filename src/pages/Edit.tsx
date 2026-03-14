@@ -6,7 +6,7 @@ import Input from "../components/Input";
 import DateTimeInputs from "../components/DateTimeInputs";
 import RepeatInputs from "../components/RepeatInputs";
 import { db } from "../lib/db";
-import { deleteItem, updateInstance, updateItem } from "../lib/mutations";
+import { deleteItem, skipInstance, updateInstance, updateItem } from "../lib/mutations";
 import { parseItem, parseTemplate, today, now } from "../lib/dates";
 import { FormState, ItemType, Mode, Unit } from "../lib/form";
 
@@ -79,7 +79,12 @@ const Edit: Component = () => {
 	const handleDelete = () => {
 		const i = item();
 		if (!i) return;
-		deleteItem(i);
+		const t = template();
+		if (t) {
+			skipInstance(i, t, auth().user!);
+		} else {
+			deleteItem(i);
+		}
 		navigate(-1);
 	};
 
@@ -97,6 +102,7 @@ const Edit: Component = () => {
 					<Button type="submit">Save</Button>
 				</section>
 				<Input
+					autofocus
 					type="text"
 					placeholder="Text"
 					value={form.text}

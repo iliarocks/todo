@@ -25,6 +25,7 @@ const Login: Component = () => {
 				<Match when={step() === "email"}>
 					<form onSubmit={handleEmailSubmit} class="flex flex-col w-full gap-s">
 						<Input
+							autofocus
 							type="email"
 							placeholder="Email"
 							value={email()}
@@ -37,6 +38,7 @@ const Login: Component = () => {
 				<Match when={step() === "code"}>
 					<form onSubmit={handleCodeSubmit} class="flex flex-col w-full gap-s">
 						<Input
+							autofocus
 							type="text"
 							placeholder="Code"
 							value={code()}

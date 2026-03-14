@@ -102,32 +102,37 @@ const Today: Component = () => {
 
 	return (
 		<Show when={!state().isLoading && !state().error}>
-			<DragDropProvider onDragEnd={onDragEnd} collisionDetector={closestCenter}>
-				<DragDropSensors />
-				<SortableProvider ids={ids()}>
-					<For each={entries()}>
-						{(entry) => {
-							const sortable = createSortable(entry.id);
-							return (
-								<Show when={entry.item}>
-									{(rawItem) => {
-										const item = parseItem(rawItem());
-										return (
-											<div use:sortable class="touch-none select-none">
-												{item.type === "todo" ? (
-													<TodoItem todo={item} />
-												) : (
-													<EventItem event={item} />
-												)}
-											</div>
-										);
-									}}
-								</Show>
-							);
-						}}
-					</For>
-				</SortableProvider>
-			</DragDropProvider>
+			<Show
+				when={entries().length > 0}
+				fallback={<div class="flex h-full items-center justify-center"><p class="text-[var(--secondary)] text-sm">What needs to get done?</p></div>}
+			>
+				<DragDropProvider onDragEnd={onDragEnd} collisionDetector={closestCenter}>
+					<DragDropSensors />
+					<SortableProvider ids={ids()}>
+						<For each={entries()}>
+							{(entry) => {
+								const sortable = createSortable(entry.id);
+								return (
+									<Show when={entry.item}>
+										{(rawItem) => {
+											const item = parseItem(rawItem());
+											return (
+												<div use:sortable class="touch-none select-none">
+													{item.type === "todo" ? (
+														<TodoItem todo={item} />
+													) : (
+														<EventItem event={item} />
+													)}
+												</div>
+											);
+										}}
+									</Show>
+								);
+							}}
+						</For>
+					</SortableProvider>
+				</DragDropProvider>
+			</Show>
 		</Show>
 	);
 };
