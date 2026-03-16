@@ -1,11 +1,10 @@
 import { Component, Show } from "solid-js";
 import { Temporal } from "temporal-polyfill";
 import Input from "./Input";
-import { ItemType } from "../lib/form";
-import { today } from "../lib/dates";
+import { parsePlainDate, parsePlainTime, today } from "../lib/dates";
 
 const DateTimeInputs: Component<{
-	type: ItemType;
+	time?: boolean;
 	date: Temporal.PlainDate;
 	end: Temporal.PlainTime | undefined;
 	start: Temporal.PlainTime | undefined;
@@ -19,16 +18,16 @@ const DateTimeInputs: Component<{
 				type="date"
 				value={props.date.toString()}
 				min={today().toString()}
-				onInput={(e) => props.setDate(Temporal.PlainDate.from(e.currentTarget.value))}
+				onInput={(e) => props.setDate(parsePlainDate(e.currentTarget.value))}
 				required
 			/>
-			<Show when={props.type === "event"}>
+			<Show when={props.time}>
 				<Input
 					type="time"
 					value={props.start?.toString() ?? ""}
 					onInput={(e) => {
 						const value = e.currentTarget.value;
-						props.setStart(value ? Temporal.PlainTime.from(value) : undefined);
+						props.setStart(value ? parsePlainTime(value) : undefined);
 					}}
 				/>
 				<Input
@@ -36,7 +35,7 @@ const DateTimeInputs: Component<{
 					value={props.end?.toString() ?? ""}
 					onInput={(e) => {
 						const value = e.currentTarget.value;
-						props.setEnd(value ? Temporal.PlainTime.from(value) : undefined);
+						props.setEnd(value ? parsePlainTime(value) : undefined);
 					}}
 				/>
 			</Show>

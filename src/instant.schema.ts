@@ -13,47 +13,37 @@ const _schema = i.schema({
 			type: i.string().optional(),
 		}),
 		items: i.entity({
-			type: i.string().indexed(),
-			text: i.string().indexed(),
-			date: i.string().indexed(),
-			start: i.string().optional(),
-			end: i.string().optional(),
-			notes: i.string().optional(),
-		}),
-		templates: i.entity({
 			type: i.string(),
 			text: i.string(),
-			mode: i.string(),
-			interval: i.number(),
-			unit: i.string(),
-			anchor: i.string(),
+			date: i.string(),
 			start: i.string().optional(),
 			end: i.string().optional(),
 			notes: i.string().optional(),
+			order: i.string().optional(),
 		}),
-		today: i.entity({
-			order: i.number().indexed(),
+		templates: i.entity({
+			text: i.string(),
+			start: i.string().optional(),
+			end: i.string().optional(),
+			notes: i.string().optional(),
+			mode: i.string(),
+			unit: i.string(),
+			interval: i.number(),
+			anchor: i.json().optional(),
+			reference: i.string().optional(),
 		}),
 	},
 	links: {
-		userItems: {
+		itemUser: {
 			forward: { on: "items", has: "one", label: "user", onDelete: "cascade", required: true },
 			reverse: { on: "$users", has: "many", label: "items" },
 		},
-		userTemplates: {
+		templateUser: {
 			forward: { on: "templates", has: "one", label: "user", onDelete: "cascade", required: true },
 			reverse: { on: "$users", has: "many", label: "templates" },
 		},
-		userToday: {
-			forward: { on: "today", has: "one", label: "user", onDelete: "cascade", required: true },
-			reverse: { on: "$users", has: "many", label: "today" },
-		},
-		todayItem: {
-			forward: { on: "today", has: "one", label: "item", onDelete: "cascade" },
-			reverse: { on: "items", has: "one", label: "today" },
-		},
-		templateInstance: {
-			forward: { on: "templates", has: "one", label: "instance" },
+		templateItems: {
+			forward: { on: "templates", has: "one", label: "instance", required: true },
 			reverse: { on: "items", has: "one", label: "template" },
 		},
 	},

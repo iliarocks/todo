@@ -3,42 +3,37 @@ import { useNavigate } from "@solidjs/router";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import { createStore } from "solid-js/store";
-import ToggleSelect from "../components/ToggleButton";
-import { createEvent, createTodo } from "../lib/mutations";
+import ToggleSelect from "../components/ToggleSelect";
+import { createItem, CreateParameters } from "../lib/mutations";
 import { db } from "../lib/db";
 import DateTimeInputs from "../components/DateTimeInputs";
 import RepeatInputs from "../components/RepeatInputs";
-import { FormState, TYPES } from "../lib/form";
 import { now, today } from "../lib/dates";
+import { TYPES } from "../lib/types";
 
 const Create: Component = () => {
 	const auth = db.useAuth();
 	const navigate = useNavigate();
-	const [form, setForm] = createStore<FormState>(defaultForm("todo"));
-
-	const resetForm = (type: FormState["type"]) => setForm(defaultForm(type));
+	const [form, setForm] = createStore<CreateParameters>(defaultForm("todo"));
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 
-		const { text, date, start, end, mode, interval, unit, anchor } = form;
 		const user = auth().user;
-		if (!user) return;
 
-		if (form.type === "todo") createTodo(text, form.notes, date, mode, interval, unit, anchor, user);
-		if (form.type === "event")
-			createEvent(text, form.notes, date, start, end, mode, interval, unit, anchor, user);
-
-		navigate(-1);
+		if (user) {
+			createItem(form, user);
+			navigate(-1);
+		}
 	};
 
 	return (
-		<form onSubmit={handleSubmit} class="flex flex-col gap-[24px]">
+		<form onSubmit={handleSubmit} class="flex flex-col gap-s">
 			<section class="flex justify-between items-center">
 				<ToggleSelect
 					options={TYPES}
-					selected={[TYPES.indexOf(form.type)]}
-					onSelect={([i]) => resetForm(TYPES[i])}
+					selected={TYPES.indexOf(form.type)}
+					onSelect={(i) => setForm(defaultForm(TYPES[i]))}
 					single
 				/>
 				<Button type="submit">Save</Button>
@@ -53,20 +48,20 @@ const Create: Component = () => {
 			/>
 			<textarea
 				placeholder="Notes"
-				value={form.notes}
-				onInput={(e) => setForm({ notes: e.currentTarget.value })}
+				value={form.notes ?? ""}
+				onInput={(e) => setForm({ notes: e.currentTarget.value || undefined })}
 				class="p-s rounded-lg bg-[var(--surface)] resize-none field-sizing-content min-h-[2.5rem]"
 			/>
 			<section class="flex flex-col gap-xs">
 				<p class="text-xs text-[var(--secondary)]">WHEN</p>
 				<DateTimeInputs
-					type={form.type}
 					date={form.date}
 					start={form.start}
 					end={form.end}
 					setDate={(date) => setForm({ date })}
 					setStart={(start) => setForm({ start })}
 					setEnd={(end) => setForm({ end })}
+					time={form.type === "event"}
 				/>
 			</section>
 			<section class="flex flex-col gap-xs">
@@ -87,17 +82,17 @@ const Create: Component = () => {
 	);
 };
 
-const defaultForm = (type: FormState["type"]): FormState => ({
+const defaultForm = (type: CreateParameters["type"]): CreateParameters => ({
 	type,
 	text: "",
-	notes: "",
+	notes: undefined,
 	date: today(),
-	start: now(),
-	end: now(),
-	mode: "none",
-	interval: 1,
-	unit: "day",
-	anchor: "",
+	start: type === "todo" ? undefined : now(),
+	end: type === "todo" ? undefined : now(),
+	mode: undefined,
+	interval: undefined,
+	unit: undefined,
+	anchor: undefined,
 });
 
 export default Create;

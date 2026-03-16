@@ -15,9 +15,9 @@ const Layout: ParentComponent = (props) => {
 		location.pathname === "/menu" ||
 		location.pathname === "/create" ||
 		location.pathname.startsWith("/edit/") ||
-		location.pathname.startsWith("/note/");
+		location.pathname.startsWith("/notes/");
 	const noteId = () => {
-		const m = location.pathname.match(/^\/note\/(.+)$/);
+		const m = location.pathname.match(/^\/notes\/(.+)$/);
 		return m ? m[1] : null;
 	};
 
@@ -28,25 +28,25 @@ const Layout: ParentComponent = (props) => {
 					<div class="flex flex-col gap-s py-s h-full w-full">
 						<main class="grow px-s overflow-y-scroll">{props.children}</main>
 						<div class="flex justify-center gap-l px-s">
-						<Show when={showClose()}>
-							<Show when={noteId()}>
-								{(nid) => (
-									<Button onClick={() => navigate(`/edit/${nid()}`)}>
-										<Icon>edit</Icon>
-									</Button>
-								)}
+							<Show when={showClose()}>
+								<Show when={noteId()}>
+									{(nid) => (
+										<Button onClick={() => navigate(`/edit/${nid()}`)}>
+											<Icon>edit</Icon>
+										</Button>
+									)}
+								</Show>
+								<Button onClick={() => navigate(-1)}>
+									<Icon>close</Icon>
+								</Button>
 							</Show>
-							<Button onClick={() => navigate(-1)}>
-								<Icon>close</Icon>
-							</Button>
-						</Show>
-						<Show when={!showClose()}>
-							<A href="/menu">
-								<Icon>more_vert</Icon>
-							</A>
-							<A href="/create">
-								<Icon>playlist_add</Icon>
-							</A>
+							<Show when={!showClose()}>
+								<A href="/menu">
+									<Icon>more_vert</Icon>
+								</A>
+								<A href="/create">
+									<Icon>playlist_add</Icon>
+								</A>
 							</Show>
 						</div>
 					</div>

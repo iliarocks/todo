@@ -1,72 +1,52 @@
 import { id } from "@instantdb/solidjs";
-import { db } from "./db";
-import { Item, Template } from "./types";
-import { nextDate } from "./repeat";
-import { Mode, Unit } from "./form";
 import { Temporal } from "temporal-polyfill";
+import { db } from "./db";
+import { Item, Mode, Unit, Type, Todo } from "./types";
+import { nextDate } from "./repeat";
 
-export const createTodo = (
-	text: string,
-	notes: string,
-	date: Temporal.PlainDate,
-	mode: Mode,
-	interval: number,
-	unit: Unit,
-	anchor: string,
-	user: { id: string },
-) => {
-	const type = "todo";
-	const itemId = id();
-
-	const transactions: any[] = [
-		db.tx.items[itemId].create({ type, text, notes: notes || undefined, date: date.toString() }).link({ user: user.id }),
-	];
-
-	if (mode !== "none") {
-		transactions.push(
-			db.tx.templates[id()]
-				.create({ type, text, notes: notes || undefined, mode, interval, unit, anchor })
-				.link({ user: user.id, instance: itemId }),
-		);
-	}
-
-	db.transact(transactions);
+export type CreateParameters = {
+	type: Type;
+	text: string;
+	date: Temporal.PlainDate;
+	start?: Temporal.PlainTime;
+	end?: Temporal.PlainTime;
+	notes?: string;
+	mode?: Mode;
+	interval?: number;
+	unit?: Unit;
+	anchor?: number[];
 };
 
-export const createEvent = (
-	text: string,
-	notes: string,
-	date: Temporal.PlainDate,
-	start: Temporal.PlainTime | undefined,
-	end: Temporal.PlainTime | undefined,
-	mode: Mode,
-	interval: number,
-	unit: Unit,
-	anchor: string,
-	user: { id: string },
-) => {
-	const type = "event";
+export const createItem = (params: CreateParameters, user: { id: string }) => {
+	const { type, text, date, start, end, notes, mode, unit, interval, anchor } = params;
 	const itemId = id();
 
 	const transactions: any[] = [
 		db.tx.items[itemId]
-			.create({ type, text, notes: notes || undefined, date: date.toString(), start: start?.toString(), end: end?.toString() })
+			.create({
+				type,
+				text,
+				date: date.toString(),
+				start: start?.toString(),
+				end: end?.toString(),
+				notes,
+			})
 			.link({ user: user.id }),
 	];
 
-	if (mode !== "none") {
+	if (mode && unit && interval) {
 		transactions.push(
 			db.tx.templates[id()]
 				.create({
-					type,
 					text,
-					notes: notes || undefined,
 					start: start?.toString(),
 					end: end?.toString(),
+					notes,
 					mode,
-					interval,
 					unit,
+					interval,
 					anchor,
+					reference: mode === "absolute" ? date.toString() : undefined,
 				})
 				.link({ user: user.id, instance: itemId }),
 		);
@@ -75,134 +55,93 @@ export const createEvent = (
 	db.transact(transactions);
 };
 
-export const completeTodo = (todo: Item, user: { id: string }, template?: Template) => {
-	const { type, text, date } = todo;
-	const transactions: any[] = [db.tx.items[todo.id].delete()];
-
-	if (template) {
-		const newDate = nextDate(date, template);
-		db.transact([
-			db.tx.items[id()]
-				.create({ type, text, notes: template.notes || undefined, date: newDate.toString() })
-				.link({ user: user.id, template: template.id }),
-		]);
-	}
-
-	db.transact(transactions);
+export type EditParameters = {
+	text: string;
+	date: Temporal.PlainDate;
+	start?: Temporal.PlainTime;
+	end?: Temporal.PlainTime;
+	notes?: string;
 };
 
-export const updateInstance = (
-	item: { id: string },
-	{ text, notes, date, start, end }: { text: string; notes: string; date: Temporal.PlainDate; start?: Temporal.PlainTime; end?: Temporal.PlainTime },
-) => {
-	db.transact([
-		db.tx.items[item.id].update({
+export const updateItem = (itemId: string, params: EditParameters, templateId?: string) => {
+	const { text, date, start, end, notes } = params;
+	const transactions: any[] = [
+		db.tx.items[itemId].update({
 			text,
-			notes: notes || undefined,
 			date: date.toString(),
 			start: start?.toString(),
 			end: end?.toString(),
-		}),
-	]);
-};
-
-export const updateTemplate = (
-	template: { id: string },
-	form: { type: string; text: string; notes: string; start?: Temporal.PlainTime; end?: Temporal.PlainTime; mode: Mode; interval: number; unit: Unit; anchor: string },
-) => {
-	db.transact([
-		db.tx.templates[template.id].update({
-			type: form.type,
-			text: form.text,
-			notes: form.notes || undefined,
-			start: form.start?.toString(),
-			end: form.end?.toString(),
-			mode: form.mode,
-			interval: form.interval,
-			unit: form.unit,
-			anchor: form.anchor,
-		}),
-	]);
-};
-
-// For non-repeating items: updates item fields and handles creating/updating/deleting the template
-export const updateItem = (
-	item: { id: string },
-	form: { type: string; text: string; notes: string; date: Temporal.PlainDate; start?: Temporal.PlainTime; end?: Temporal.PlainTime; mode: Mode; interval: number; unit: Unit; anchor: string },
-	template: Template | undefined,
-	user: { id: string },
-) => {
-	const transactions: any[] = [
-		db.tx.items[item.id].update({
-			type: form.type,
-			text: form.text,
-			notes: form.notes || undefined,
-			date: form.date.toString(),
-			start: form.start?.toString(),
-			end: form.end?.toString(),
+			notes,
 		}),
 	];
 
-	if (template) {
-		if (form.mode !== "none") {
-			transactions.push(
-				db.tx.templates[template.id].update({
-					type: form.type,
-					text: form.text,
-					notes: form.notes || undefined,
-					mode: form.mode,
-					interval: form.interval,
-					unit: form.unit,
-					anchor: form.anchor,
-					start: form.start?.toString(),
-					end: form.end?.toString(),
-				}),
-			);
-		} else {
-			transactions.push(db.tx.templates[template.id].delete());
-		}
-	} else if (form.mode !== "none") {
+	if (templateId) {
 		transactions.push(
-			db.tx.templates[id()]
-				.create({
-					type: form.type,
-					text: form.text,
-					notes: form.notes || undefined,
-					mode: form.mode,
-					interval: form.interval,
-					unit: form.unit,
-					anchor: form.anchor,
-					start: form.start?.toString(),
-					end: form.end?.toString(),
-				})
-				.link({ user: user.id, instance: item.id }),
+			db.tx.templates[templateId].update({
+				text,
+				start: start?.toString(),
+				end: end?.toString(),
+				notes,
+			}),
 		);
 	}
 
 	db.transact(transactions);
 };
 
-export const skipInstance = (item: Item, template: Template, user: { id: string }) => {
-	const newDate = nextDate(item.date, template);
+export const updateTemplate = (templateId: string, instanceId: string, params: EditParameters) => {
+	const { text, date, start, end, notes } = params;
 	db.transact([
-		db.tx.items[id()]
-			.create({
-				type: template.type,
-				text: template.text,
-				notes: template.notes || undefined,
-				date: newDate.toString(),
-				start: template.start?.toString(),
-				end: template.end?.toString(),
-			})
-			.link({ user: user.id, template: template.id }),
-		db.tx.items[item.id].delete(),
+		db.tx.templates[templateId].update({
+			text,
+			start: start?.toString(),
+			end: end?.toString(),
+			notes,
+		}),
+		db.tx.items[instanceId].update({
+			text,
+			date: date.toString(),
+			start: start?.toString(),
+			end: end?.toString(),
+			notes,
+		}),
 	]);
 };
 
-export const deleteItem = (item: Item) => {
-	db.transact([db.tx.items[item.id].delete()]);
+export const reconcileEvents = (items: Item[]) => {
+	const stale = items.filter((i) => i.type === "event");
+	if (stale.length === 0) return;
+	db.transact(stale.map((i) => db.tx.items[i.id].delete()));
 };
 
-export const deleteTemplate = (template: Template) => {
-	db.transact([db.tx.templates[template.id].delete()]);
+export const reorderItems = (ids: string[]) => {
+	db.transact(
+		ids.map((itemId, i) =>
+			db.tx.items[itemId].update({ order: String(i).padStart(5, "0") }),
+		),
+	);
+};
+
+export const completeTodo = (todo: Todo, user: { id: string }) => {
+	if (!todo.template) {
+		db.transact([db.tx.items[todo.id].delete()]);
+		return;
+	}
+
+	const { template } = todo;
+	const date = nextDate(todo.date, template);
+	const newItemId = id();
+
+	db.transact([
+		db.tx.items[newItemId]
+			.create({
+				type: "todo",
+				text: template.text,
+				date: date.toString(),
+				notes: template.notes,
+			})
+			.link({ user: user.id }),
+		db.tx.templates[template.id].link({ instance: newItemId }),
+		db.tx.items[todo.id].delete(),
+	]);
 };

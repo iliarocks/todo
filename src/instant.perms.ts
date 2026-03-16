@@ -10,8 +10,6 @@ const ownerRule = {
 const rules = {
   items:     ownerRule,
   templates: ownerRule,
-  today:     ownerRule,
-  log:       ownerRule,
 } satisfies InstantRules;
 
 export default rules;
