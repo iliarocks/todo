@@ -22,9 +22,13 @@ type LinkedTodo = { id: string; type: "todo"; date: Temporal.PlainDate; text: st
 type LinkedEvent = { id: string; type: "event"; date: Temporal.PlainDate; text: string; notes?: string; order?: string; start?: Temporal.PlainTime; end?: Temporal.PlainTime };
 type LinkedItem = LinkedTodo | LinkedEvent;
 
-type LinkedTemplate = Repeat & { id: string; text: string; notes?: string; start?: Temporal.PlainTime; end?: Temporal.PlainTime };
+type LinkedTodoTemplate = Repeat & { id: string; type: "todo"; text: string; notes?: string };
+type LinkedEventTemplate = Repeat & { id: string; type: "event"; text: string; notes?: string; start?: Temporal.PlainTime; end?: Temporal.PlainTime };
+type LinkedTemplate = LinkedTodoTemplate | LinkedEventTemplate;
 
-export type Template = LinkedTemplate & { instance?: LinkedItem };
+export type TodoTemplate = LinkedTodoTemplate & { instance?: LinkedItem };
+export type EventTemplate = LinkedEventTemplate & { instance?: LinkedItem };
+export type Template = TodoTemplate | EventTemplate;
 export type Todo = LinkedTodo & { template?: LinkedTemplate };
 export type Event = LinkedEvent & { template?: LinkedTemplate };
 export type Item = Todo | Event;
@@ -63,14 +67,23 @@ const parseLinkedItem = (raw: NonNullable<DatabaseTemplate["instance"]>): Linked
 	return { ...base, type: "todo" };
 };
 
-const parseLinkedTemplate = (raw: NonNullable<DatabaseItem["template"]>): LinkedTemplate => ({
-	id: raw.id,
-	...parseRepeat(raw),
-	text: raw.text,
-	notes: raw.notes || undefined,
-	start: raw.start ? parsePlainTime(raw.start) : undefined,
-	end: raw.end ? parsePlainTime(raw.end) : undefined,
-});
+const parseLinkedTemplate = (raw: NonNullable<DatabaseItem["template"]>): LinkedTemplate => {
+	const base = {
+		id: raw.id,
+		...parseRepeat(raw),
+		text: raw.text,
+		notes: raw.notes || undefined,
+	};
+	if (raw.type === "event") {
+		return {
+			...base,
+			type: "event",
+			start: raw.start ? parsePlainTime(raw.start) : undefined,
+			end: raw.end ? parsePlainTime(raw.end) : undefined,
+		};
+	}
+	return { ...base, type: "todo" };
+};
 
 export const parseItem = (raw: DatabaseItem): Item => {
 	const template = raw.template ? parseLinkedTemplate(raw.template) : undefined;
@@ -93,12 +106,21 @@ export const parseItem = (raw: DatabaseItem): Item => {
 	return { ...base, type: "todo" };
 };
 
-export const parseTemplate = (raw: DatabaseTemplate): Template => ({
-	id: raw.id,
-	...parseRepeat(raw),
-	text: raw.text,
-	notes: raw.notes || undefined,
-	start: raw.start ? parsePlainTime(raw.start) : undefined,
-	end: raw.end ? parsePlainTime(raw.end) : undefined,
-	instance: raw.instance ? parseLinkedItem(raw.instance) : undefined,
-});
+export const parseTemplate = (raw: DatabaseTemplate): Template => {
+	const base = {
+		id: raw.id,
+		...parseRepeat(raw),
+		text: raw.text,
+		notes: raw.notes || undefined,
+		instance: raw.instance ? parseLinkedItem(raw.instance) : undefined,
+	};
+	if (raw.type === "event") {
+		return {
+			...base,
+			type: "event",
+			start: raw.start ? parsePlainTime(raw.start) : undefined,
+			end: raw.end ? parsePlainTime(raw.end) : undefined,
+		};
+	}
+	return { ...base, type: "todo" };
+};

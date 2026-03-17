@@ -1,7 +1,10 @@
-import { useParams } from "@solidjs/router";
+import { A, useParams } from "@solidjs/router";
 import { type Component, Show } from "solid-js";
 import { db } from "../lib/db";
-import { parseItem, parseTemplate } from "../lib/types";
+import { Item, parseItem, parseTemplate, Template } from "../lib/types";
+import Button from "../components/Button";
+import { marked } from "marked";
+
 
 const Notes: Component = () => {
 	const params = useParams<{ type: string; id: string }>();
@@ -13,7 +16,7 @@ const Notes: Component = () => {
 		templates: { instance: {}, $: { where: { id: params.id } } },
 	});
 
-	const item = () => {
+	const item = (): Item | Template | undefined => {
 		if (isTemplate()) {
 			const raw = templateQuery().data?.templates?.[0];
 			if (!raw) return undefined;
@@ -27,11 +30,12 @@ const Notes: Component = () => {
 	return (
 		<Show when={item()}>
 			{(data) => (
-				<div class="flex flex-col gap-s p-xs">
-					<h1 class="text-[var(--secondary)]">{data().text}</h1>
-					<Show when={data().notes}>
-						{(notes) => <p class="whitespace-pre-wrap">{notes()}</p>}
-					</Show>
+				<div class="flex flex-col gap-m h-full justify-center">
+					<section class="flex justify-between">
+						<h1 class="text-[var(--secondary)]">{data().text}</h1>
+						<Button><A href={`/edit/${params.type}/${data().type}/${params.id}`}>Edit</A></Button>
+					</section>
+					<Show when={data().notes}>{(notes) => <div innerHTML={marked.parse(notes()) as string} />}</Show>
 				</div>
 			)}
 		</Show>

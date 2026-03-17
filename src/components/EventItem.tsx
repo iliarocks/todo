@@ -18,7 +18,7 @@ const EventItem: Component<{ event: Event; virtual?: boolean }> = (props) => {
 		>
 			<p>{event().text}</p>
 			<Show when={event().start && event().end}>
-				<p class="text-[var(--secondary)] text-xs font-light font-[IBM_Plex_Mono]">
+				<p class="text-[var(--secondary)] text-xs font-light">
 					{format(event().start!)} – {format(event().end!)}
 				</p>
 			</Show>

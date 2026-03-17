@@ -22,6 +22,7 @@ const _schema = i.schema({
 			order: i.string().optional(),
 		}),
 		templates: i.entity({
+			type: i.string(),
 			text: i.string(),
 			start: i.string().optional(),
 			end: i.string().optional(),

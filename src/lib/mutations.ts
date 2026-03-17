@@ -108,6 +108,39 @@ export const updateTemplate = (templateId: string, instanceId: string, params: E
 	]);
 };
 
+export const deleteItem = (item: Item, user: { id: string }) => {
+	if (!item.template) {
+		db.transact([db.tx.items[item.id].delete()]);
+		return;
+	}
+
+	const { template } = item;
+	const date = nextDate(item.date, template);
+	const newItemId = id();
+
+	const start = template.type === "event" ? template.start?.toString() : undefined;
+	const end = template.type === "event" ? template.end?.toString() : undefined;
+
+	db.transact([
+		db.tx.items[newItemId]
+			.create({
+				type: item.type,
+				text: template.text,
+				date: date.toString(),
+				start,
+				end,
+				notes: template.notes,
+			})
+			.link({ user: user.id }),
+		db.tx.templates[template.id].link({ instance: newItemId }),
+		db.tx.items[item.id].delete(),
+	]);
+};
+
+export const deleteTemplate = (templateId: string) => {
+	db.transact([db.tx.templates[templateId].delete()]);
+};
+
 export const reconcileEvents = (items: Item[]) => {
 	const stale = items.filter((i) => i.type === "event");
 	if (stale.length === 0) return;

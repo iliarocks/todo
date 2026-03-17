@@ -78,6 +78,7 @@ const Today: Component = () => {
 	};
 
 	return (
+		<div class="flex flex-col h-full justify-center">
 		<Show when={!state().error}>
 			<Show when={!state().isLoading}>
 				<DragDropProvider onDragEnd={onDragEnd} collisionDetector={closestCenter}>
@@ -112,6 +113,7 @@ const Today: Component = () => {
 				</DragDropProvider>
 			</Show>
 		</Show>
+		</div>
 	);
 };
 

@@ -1,14 +1,12 @@
-import { Component, JSX, splitProps } from "solid-js";
+import { ParentComponent } from "solid-js";
 
-const Icon: Component<JSX.HTMLAttributes<HTMLSpanElement> & { size?: number }> = (props) => {
-	const [local, rest] = splitProps(props, ["class", "size", "children"]);
+const Icon: ParentComponent<{ size?: number }> = (props) => {
 	return (
 		<span
-			class={`material-symbols-outlined ${local.class ?? ""}`}
-			style={{ "font-size": `${local.size ?? 24}px` }}
-			{...rest}
+			class="material-symbols-outlined"
+			style={{ "font-size": `${props.size ?? 24}px`, color: "var(--secondary)" }}
 		>
-			{local.children}
+			{props.children}
 		</span>
 	);
 };

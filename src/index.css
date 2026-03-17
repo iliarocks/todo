@@ -1,59 +1,16 @@
 @import "tailwindcss";
-@import "@fontsource/ibm-plex-sans/300.css";
 @import "@fontsource/ibm-plex-sans/400.css";
 @import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-mono/300.css";
-@import "@fontsource/ibm-plex-mono/400.css";
-
-@font-face {
-  font-family: "App";
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  src: url("@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "App";
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  src: url("@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
-  unicode-range: U+0030-0039;
-}
-
-@font-face {
-  font-family: "App";
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-  src: url("@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "App";
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-  src: url("@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-300-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "App";
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-  src: url("@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-300-normal.woff2") format("woff2");
-  unicode-range: U+0030-0039;
-}
 
 @theme {
-	--spacing-2xs: 4px;
+  --spacing-2xs: 4px;
   --spacing-xs: 8px;
   --spacing-s: 16px;
-  --spacing-m: 32px;
-  --spacing-l: 48px;
-  --spacing-xl: 96px;
+  --spacing-m: 24px;
+  --spacing-l: 32px;
+  --spacing-xl: 48px;
+  --spacing-2xl: 64px;
+  --spacing-3xl: 96px;
 }
 
 :root {
@@ -64,29 +21,16 @@
   --primary: #363636;
   --accent: #1a1a1a;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --surface: #141414;
-    --border: #1e1e1e;
-    --secondary: #585858;
-    --primary: #a0a0a0;
-    --accent: #d0d0d0;
-  }
-}
 
 body {
-  font-family: "App", system-ui, sans-serif;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+	font-size: 0.875rem;
   color: var(--primary);
   background: var(--background);
 }
 
 * {
   scrollbar-width: none;
-}
-
-*::-webkit-scrollbar {
-  display: none;
 }
 
 input[type="number"]::-webkit-outer-spin-button,

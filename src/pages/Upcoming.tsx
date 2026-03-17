@@ -34,15 +34,15 @@ const Upcoming: Component = () => {
 	return (
 		<Show when={!state().error}>
 			<Show when={!state().isLoading}>
-				<div class="flex flex-col gap-[54px]">
+				<div class="flex flex-col gap-2xl">
 					<For each={Object.entries(itemsByDate())}>
 						{([dateKey, itemGroup]) => {
 							const { weekday, monthDay } = formatDate(dateKey);
 
 							return (
-								<section class="flex flex-col gap-xs">
+								<section class="flex flex-col gap-s">
 									<header class="flex justify-between px-xs text-[var(--secondary)]">
-										<h2 class="font-medium text-sm">{weekday}</h2>
+										<h2 class="">{weekday}</h2>
 										<h2 class="font-light text-xs">{monthDay}</h2>
 									</header>
 									<ul>

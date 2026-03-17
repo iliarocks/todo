@@ -10,47 +10,49 @@ const Layout: ParentComponent = (props) => {
 	onMount(() => inject());
 	const auth = db.useAuth();
 	const location = useLocation();
+	const isListPage = () => location.pathname === "/" || location.pathname === "/upcoming";
+
+	return (
+		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
+			<Show when={!auth().isLoading}>
+				<Show when={auth().user} fallback={<Login />}>
+					<div class="flex flex-col h-full w-full">
+						<main class={`grow overflow-y-scroll py-m ${isListPage() ? "px-s" : "px-m"}`}>{props.children}</main>
+						<Footer />
+					</div>
+				</Show>
+			</Show>
+		</div>
+	);
+};
+
+const Footer = () => {
+	const location = useLocation();
 	const navigate = useNavigate();
 	const showClose = () =>
 		location.pathname === "/menu" ||
 		location.pathname === "/create" ||
 		location.pathname.startsWith("/edit/") ||
 		location.pathname.startsWith("/notes/");
-	const noteId = () => {
-		const m = location.pathname.match(/^\/notes\/(.+)$/);
-		return m ? m[1] : null;
-	};
 
 	return (
-		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
-			<Show when={!auth().isLoading}>
-				<Show when={auth().user} fallback={<Login />}>
-					<div class="flex flex-col gap-s py-s h-full w-full">
-						<main class="grow px-s overflow-y-scroll">{props.children}</main>
-						<div class="flex justify-center gap-l px-s">
-							<Show when={showClose()}>
-								<Show when={noteId()}>
-									{(nid) => (
-										<Button onClick={() => navigate(`/edit/${nid()}`)}>
-											<Icon>edit</Icon>
-										</Button>
-									)}
-								</Show>
-								<Button onClick={() => navigate(-1)}>
-									<Icon>close</Icon>
-								</Button>
-							</Show>
-							<Show when={!showClose()}>
-								<A href="/menu">
-									<Icon>more_vert</Icon>
-								</A>
-								<A href="/create">
-									<Icon>playlist_add</Icon>
-								</A>
-							</Show>
-						</div>
-					</div>
-				</Show>
+		<div class="flex justify-center gap-l p-s">
+			<Show
+				when={showClose()}
+				fallback={
+					<>
+						<A href="/menu">
+							<Icon>more_vert</Icon>
+						</A>
+						<A href="/create">
+							<Icon>playlist_add</Icon>
+						</A>
+					</>
+				}
+			>
+				<Button onClick={() => navigate(-1)}>
+					<Icon>close</Icon>
+				</Button>
 			</Show>
 		</div>
 	);

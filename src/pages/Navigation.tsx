@@ -6,10 +6,10 @@ import Button from "../components/Button";
 const Navigation: Component = () => {
 	return (
 		<nav class="flex flex-col items-center justify-center gap-m h-full w-full">
-			<A href="/" class="text-4xl">
+			<A href="/" class="text-4xl font-medium">
 				Today
 			</A>
-			<A href="/upcoming" class="text-4xl">
+			<A href="/upcoming" class="text-4xl font-medium">
 				Upcoming
 			</A>
 			<Button onClick={() => db.auth.signOut()} class="text-[var(--secondary)]">

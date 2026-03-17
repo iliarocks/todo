@@ -46,11 +46,11 @@ const Create: Component = () => {
 				onInput={(e) => setForm({ text: e.currentTarget.value })}
 				required
 			/>
-			<textarea
+			<Input
 				placeholder="Notes"
 				value={form.notes ?? ""}
 				onInput={(e) => setForm({ notes: e.currentTarget.value || undefined })}
-				class="p-s rounded-lg bg-[var(--surface)] resize-none field-sizing-content min-h-[2.5rem]"
+				multiline
 			/>
 			<section class="flex flex-col gap-xs">
 				<p class="text-xs text-[var(--secondary)]">WHEN</p>

@@ -4,7 +4,7 @@ import { type Component, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { db } from "../lib/db";
 import { parseItem, parseTemplate, Item, Template } from "../lib/types";
-import { EditParameters, updateItem, updateTemplate } from "../lib/mutations";
+import { EditParameters, updateItem, updateTemplate, deleteItem, deleteTemplate } from "../lib/mutations";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import DateTimeInputs from "../components/DateTimeInputs";
@@ -18,9 +18,9 @@ const toForm = (data: { text: string; date: Temporal.PlainDate; start?: Temporal
 });
 
 const Edit: Component = () => {
-	const params = useParams<{ type: string; id: string }>();
+	const params = useParams<{ source: string; type: string; id: string }>();
 	const navigate = useNavigate();
-	const isTemplate = () => params.type === "template";
+	const isTemplate = () => params.source === "template";
 
 	const itemQuery = db.useQuery({ items: { template: {}, $: { where: { id: params.id } } } });
 	const templateQuery = db.useQuery({
@@ -36,10 +36,12 @@ const Edit: Component = () => {
 		return raw ? parseItem(raw) : undefined;
 	};
 
+	const auth = db.useAuth();
+
 	return (
 		<Show when={loaded()}>
 			{(data) => (
-				<EditForm data={data()} isTemplate={isTemplate()} navigate={navigate} />
+				<EditForm data={data()} isTemplate={isTemplate()} navigate={navigate} user={auth().user!} />
 			)}
 		</Show>
 	);
@@ -48,7 +50,8 @@ const Edit: Component = () => {
 const EditForm: Component<{
 	data: Item | Template;
 	isTemplate: boolean;
-	navigate: (delta: number) => void;
+	navigate: (to: number | string) => void;
+	user: { id: string };
 }> = (props) => {
 	const source = () => {
 		if (props.isTemplate) {
@@ -60,6 +63,15 @@ const EditForm: Component<{
 	};
 
 	const [form, setForm] = createStore<EditParameters>(source());
+
+	const handleDelete = () => {
+		if (props.isTemplate) {
+			deleteTemplate((props.data as Template).id);
+		} else {
+			deleteItem(props.data as Item, props.user);
+		}
+		props.navigate("/");
+	};
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
@@ -76,7 +88,7 @@ const EditForm: Component<{
 	return (
 		<form onSubmit={handleSubmit} class="flex flex-col gap-s">
 			<section class="flex justify-between items-center">
-				<h1 class="text-[var(--secondary)]">Edit</h1>
+				<Button onClick={handleDelete}>Delete</Button>
 				<Button type="submit">Save</Button>
 			</section>
 			<Input
