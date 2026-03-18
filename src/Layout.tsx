@@ -1,10 +1,11 @@
 import { A, useLocation, useNavigate } from "@solidjs/router";
 import { ParentComponent, Show, createEffect, on, onMount } from "solid-js";
 import { inject } from "@vercel/analytics";
+import { Temporal } from "temporal-polyfill";
 import { db } from "./lib/db";
-import { reconcileEvents } from "./lib/mutations";
+import { deleteItem } from "./lib/mutations";
 import { parseItemWithTemplate } from "./lib/types";
-import { today } from "./lib/dates";
+import { now, today } from "./lib/dates";
 import Login from "./pages/Login";
 import Icon from "./components/Icon";
 import Button from "./components/Button";
@@ -28,10 +29,13 @@ const Layout: ParentComponent = (props) => {
 			const user = auth().user;
 
 			if (user) {
-				reconcileEvents(
-					is.filter((i) => i.type === "event"),
-					user,
+				const events = is.filter((i) => i.type === "event");
+				const expired = events.filter(
+					(e) =>
+						Temporal.PlainDate.compare(e.date, today()) < 0 ||
+						Temporal.PlainTime.compare(e.end ?? now(), now()) < 0,
 				);
+				for (const e of expired) deleteItem(e, user);
 			}
 		}),
 	);
@@ -41,7 +45,9 @@ const Layout: ParentComponent = (props) => {
 			<Show when={!auth().isLoading}>
 				<Show when={auth().user} fallback={<Login />}>
 					<div class="flex flex-col h-full w-full">
-						<main class={`grow overflow-y-scroll py-m ${isListPage() ? "px-s" : "px-m"}`}>{props.children}</main>
+						<main class={`grow overflow-y-scroll py-m ${isListPage() ? "px-s" : "px-m"}`}>
+							{props.children}
+						</main>
 						<Footer />
 					</div>
 				</Show>

@@ -10,10 +10,10 @@ import {
 	useDragDropContext,
 } from "@thisbeyond/solid-dnd";
 import { db } from "../lib/db";
-import { Item, parseItemWithTemplate } from "../lib/types";
+import { Item, Template, parseItemWithTemplate } from "../lib/types";
 import { reorderItem } from "../lib/mutations";
 import { today } from "../lib/dates";
-import { ListItem } from "../components/ListItem";
+import ListItem from "../components/ListItem";
 
 declare module "solid-js" {
 	namespace JSX {
@@ -71,7 +71,7 @@ const Today: Component = () => {
 	);
 };
 
-const SortableItem = (props: { item: Item }) => {
+const SortableItem = (props: { item: Item & { template?: Template } }) => {
 	const sortable = createSortable(props.item.id);
 	const [state] = useDragDropContext()!;
 	return (
@@ -91,7 +91,7 @@ const SortableItem = (props: { item: Item }) => {
 	);
 };
 
-const OverlayItem: Component<{ item: Item }> = (props) => {
+const OverlayItem: Component<{ item: Item & { template?: Template } }> = (props) => {
 	return (
 		<div class="rounded-md bg-[var(--accent)] shadow-2xs">
 			<ListItem item={props.item} />

@@ -2,21 +2,21 @@ import { Temporal } from "temporal-polyfill";
 import { Component, Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { db } from "../lib/db";
-import { Item, Todo, Event } from "../lib/types";
-import { completeTodo } from "../lib/mutations";
+import { Item, Todo, Event, Template } from "../lib/types";
+import { deleteItem } from "../lib/mutations";
 import Icon from "./Icon";
 
 
 const format = (t: Temporal.PlainTime) =>
 	t.round({ smallestUnit: "minute" }).toString().slice(0, 5);
 
-const TodoItem: Component<{ todo: Todo; virtual?: boolean }> = (props) => {
+const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: boolean }> = (props) => {
 	const auth = db.useAuth();
 	const navigate = useNavigate();
 	const todo = () => props.todo;
 	const virtual = () => props.virtual ?? false;
 
-	const onComplete = () => completeTodo(todo(), auth().user!);
+	const onComplete = () => deleteItem(todo(), auth().user!);
 
 	return (
 		<li
@@ -62,7 +62,7 @@ const EventItem: Component<{ event: Event; virtual?: boolean }> = (props) => {
 	);
 };
 
-export const ListItem: Component<{ item: Item; virtual?: boolean }> = (props) => {
+const ListItem: Component<{ item: Item & { template?: Template }; virtual?: boolean }> = (props) => {
 	const virtual = () => props.virtual ?? false;
 
 	if (props.item.type === "todo") {
@@ -71,4 +71,6 @@ export const ListItem: Component<{ item: Item; virtual?: boolean }> = (props) =>
 
 	return <EventItem event={props.item} virtual={virtual()} />;
 };
+
+export default ListItem;
 

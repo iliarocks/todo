@@ -4,7 +4,7 @@ import { db } from "../lib/db";
 import { parseItemWithTemplate, parseTemplateWithInstance } from "../lib/types";
 import { generateVirtualItems } from "../lib/repeat";
 import { today } from "../lib/dates";
-import { ListItem } from "../components/ListItem";
+import ListItem from "../components/ListItem";
 
 const Upcoming: Component = () => {
 	const state = db.useQuery({

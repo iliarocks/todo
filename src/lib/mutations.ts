@@ -1,10 +1,9 @@
 import { id } from "@instantdb/solidjs";
 import { Temporal } from "temporal-polyfill";
 import { db } from "./db";
-import { Item, Mode, Unit, Type, Todo, Template, Event } from "./types";
+import { Item, Mode, Unit, Type, Template, EventTemplate } from "./types";
 import { nextDate } from "./repeat";
 import { between } from "./order";
-import { now, today } from "./dates";
 
 export type CreateParameters = {
 	type: Type;
@@ -117,26 +116,20 @@ export const deleteItem = (item: Item & { template?: Template }, user: { id: str
 		return;
 	}
 
-	const { template } = item;
+	const template = item.template;
 	const date = nextDate(item.date, template);
-	const newItemId = id();
-
-	const start = template.type === "event" ? template.start?.toString() : undefined;
-	const end = template.type === "event" ? template.end?.toString() : undefined;
-
 	db.transact([
-		db.tx.items[newItemId]
+		db.tx.items[id()]
 			.create({
-				type: item.type,
+				type: template.type,
 				text: template.text,
 				date: date.toString(),
-				start,
-				end,
+				start: template.type === "event" ? (template as EventTemplate).start?.toString() : undefined,
+				end: template.type === "event" ? (template as EventTemplate).end?.toString() : undefined,
 				notes: template.notes,
 				order: item.order,
 			})
-			.link({ user: user.id }),
-		db.tx.templates[template.id].link({ instance: newItemId }),
+			.link({ user: user.id, template: template.id }),
 		db.tx.items[item.id].delete(),
 	]);
 };
@@ -145,70 +138,7 @@ export const deleteTemplate = (templateId: string) => {
 	db.transact([db.tx.templates[templateId].delete()]);
 };
 
-export const reorderItem = (itemId: string, before: string | undefined, after: string | undefined) => {
+export const reorderItem = (itemId: string , before: string | undefined, after: string | undefined) => {
 	db.transact([db.tx.items[itemId].update({ order: between(before, after) })]);
 };
 
-export const completeTodo = (todo: Todo & { template?: Template }, user: { id: string }) => {
-	if (!todo.template) {
-		db.transact([db.tx.items[todo.id].delete()]);
-		return;
-	}
-
-	const { template } = todo;
-	const date = nextDate(todo.date, template);
-	const newItemId = id();
-
-	db.transact([
-		db.tx.items[newItemId]
-			.create({
-				type: "todo",
-				text: template.text,
-				date: date.toString(),
-				notes: template.notes,
-				order: todo.order,
-			})
-			.link({ user: user.id }),
-		db.tx.templates[template.id].link({ instance: newItemId }),
-		db.tx.items[todo.id].delete(),
-	]);
-};
-
-export const reconcileEvents = (events: (Event & { template?: Template })[], user: { id: string }) => {
-	if (events.length === 0) return;
-
-	const expired = events.filter((e) => {
-		return (
-			Temporal.PlainDate.compare(e.date, today()) < 0 ||
-			Temporal.PlainTime.compare(e.end ?? now(), now()) < 0
-		);
-	});
-
-	if (expired.length === 0) return;
-
-	const transactions: any[] = [];
-
-	for (const e of expired) {
-		if (e.template) {
-			const date = nextDate(e.date, e.template);
-			const newItemId = id();
-			transactions.push(
-				db.tx.items[newItemId]
-					.create({
-						type: "event",
-						text: e.template.text,
-						date: date.toString(),
-						start: e.template.type === "event" ? e.template.start?.toString() : undefined,
-						end: e.template.type === "event" ? e.template.end?.toString() : undefined,
-						notes: e.template.notes,
-						order: e.order,
-					})
-					.link({ user: user.id }),
-				db.tx.templates[e.template.id].link({ instance: newItemId }),
-			);
-		}
-		transactions.push(db.tx.items[e.id].delete());
-	}
-
-	db.transact(transactions);
-};
