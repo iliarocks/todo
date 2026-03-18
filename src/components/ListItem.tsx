@@ -36,7 +36,10 @@ const TodoItem: Component<{ todo: Todo; virtual?: boolean }> = (props) => {
 				<Icon size={16}>repeat</Icon>
 			) : (
 				<button
-					onClick={(e) => { e.stopPropagation(); onComplete(); }}
+					onClick={(e) => {
+						e.stopPropagation();
+						onComplete();
+					}}
 					onPointerDown={(e) => e.stopPropagation()}
 					class="flex text-[var(--secondary)] hover:text-[var(--primary)] cursor-pointer"
 				>
@@ -93,6 +96,16 @@ export const Sortable = (props: { item: Item }) => {
 			) : (
 				<ListItem item={props.item} />
 			)}
+		</div>
+	);
+};
+
+export const OverlayItem: Component<{ item: Item; virtual?: boolean }> = (props) => {
+	const virtual = () => props.virtual ?? false;
+
+	return (
+		<div class="bg-[var(--surface)] rounded-md">
+			<ListItem item={props.item} virtual={virtual()} />
 		</div>
 	);
 };

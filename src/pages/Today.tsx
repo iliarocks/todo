@@ -11,7 +11,7 @@ import { db } from "../lib/db";
 import { parseItemWithTemplate } from "../lib/types";
 import { reorderItem, reconcileEvents } from "../lib/mutations";
 import { today } from "../lib/dates";
-import { ListItem, Sortable } from "../components/ListItem";
+import { OverlayItem, Sortable } from "../components/ListItem";
 
 const Today: Component = () => {
 	const auth = db.useAuth();
@@ -65,7 +65,7 @@ const Today: Component = () => {
 						<DragOverlay>
 							{(draggable) => {
 								const item = items().find((i) => i.id === draggable?.id);
-								return item ? <ListItem item={item} /> : null;
+								return item ? <OverlayItem item={item} /> : null;
 							}}
 						</DragOverlay>
 					</DragDropProvider>
