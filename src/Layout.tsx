@@ -1,7 +1,10 @@
 import { A, useLocation, useNavigate } from "@solidjs/router";
-import { ParentComponent, Show, onMount } from "solid-js";
+import { ParentComponent, Show, createEffect, on, onMount } from "solid-js";
 import { inject } from "@vercel/analytics";
 import { db } from "./lib/db";
+import { reconcileEvents } from "./lib/mutations";
+import { parseItemWithTemplate } from "./lib/types";
+import { today } from "./lib/dates";
 import Login from "./pages/Login";
 import Icon from "./components/Icon";
 import Button from "./components/Button";
@@ -11,6 +14,27 @@ const Layout: ParentComponent = (props) => {
 	const auth = db.useAuth();
 	const location = useLocation();
 	const isListPage = () => location.pathname === "/" || location.pathname === "/upcoming";
+
+	const state = db.useQuery({
+		items: {
+			$: { where: { date: { $lte: today().add({ days: 1 }).toString() } } },
+			template: {},
+		},
+	});
+	const items = () => (state().data?.items ?? []).map(parseItemWithTemplate);
+
+	createEffect(
+		on(items, (is) => {
+			const user = auth().user;
+
+			if (user) {
+				reconcileEvents(
+					is.filter((i) => i.type === "event"),
+					user,
+				);
+			}
+		}),
+	);
 
 	return (
 		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">

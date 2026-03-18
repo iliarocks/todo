@@ -117,7 +117,7 @@ const parseItem = (raw: DatabaseItem): Item => {
 	return { type, ...base };
 };
 
-const parseTemplate = (raw: DatabaseTemplate): Template => {
+export const parseTemplate = (raw: DatabaseTemplate): Template => {
 	const type = ensure(raw.type, TYPES, "type");
 	const base = { id: raw.id, text: raw.text, notes: raw.notes, ...parseRepeat(raw) };
 
@@ -139,8 +139,9 @@ export const parseItemWithTemplate = (raw: QueryItem): Item & { template?: Templ
 	return template ? { template, ...item } : item;
 };
 
-export const parseTemplateWithInstance = (raw: QueryTemplate): Template & { instance?: Item } => {
+export const parseTemplateWithInstance = (raw: QueryTemplate): (Template & { instance: Item }) | null => {
+	if (!raw.instance) return null;
 	const template = parseTemplate(raw);
-	const instance = raw.instance ? parseItem(raw.instance) : undefined;
-	return instance ? { instance, ...template } : template;
+	const instance = parseItem(raw.instance);
+	return { instance, ...template };
 };

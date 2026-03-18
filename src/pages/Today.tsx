@@ -1,4 +1,4 @@
-import { type Component, For, Show, createEffect, on } from "solid-js";
+import { type Component, For, Show } from "solid-js";
 import {
 	DragDropProvider,
 	DragDropSensors,
@@ -11,7 +11,7 @@ import {
 } from "@thisbeyond/solid-dnd";
 import { db } from "../lib/db";
 import { Item, parseItemWithTemplate } from "../lib/types";
-import { reorderItem, reconcileEvents } from "../lib/mutations";
+import { reorderItem } from "../lib/mutations";
 import { today } from "../lib/dates";
 import { ListItem } from "../components/ListItem";
 
@@ -24,7 +24,6 @@ declare module "solid-js" {
 }
 
 const Today: Component = () => {
-	const auth = db.useAuth();
 	const state = db.useQuery({
 		items: {
 			$: { where: { date: { $lte: today().toString() } }, order: { order: "asc" } },
@@ -34,19 +33,6 @@ const Today: Component = () => {
 
 	const items = () => (state().data?.items ?? []).map(parseItemWithTemplate);
 	const ids = () => items().map((i) => i.id);
-
-	createEffect(
-		on(items, (is) => {
-			const user = auth().user;
-
-			if (user) {
-				reconcileEvents(
-					is.filter((i) => i.type === "event"),
-					user,
-				);
-			}
-		}),
-	);
 
 	const onDragEnd = ({ draggable, droppable }: DragEvent) => {
 		if (!draggable || !droppable || draggable.id === droppable.id) return;

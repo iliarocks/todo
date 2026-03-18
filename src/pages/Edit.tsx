@@ -42,7 +42,7 @@ const Edit: Component = () => {
 	const loaded = () => {
 		if (params.source === "template") {
 			const raw = templateQuery().data?.templates?.[0];
-			return raw ? parseTemplateWithInstance(raw) : undefined;
+			return raw ? parseTemplateWithInstance(raw) ?? undefined : undefined;
 		}
 		const raw = itemQuery().data?.items?.[0];
 		return raw ? parseItemWithTemplate(raw) : undefined;
@@ -53,7 +53,7 @@ const Edit: Component = () => {
 			{(data) => {
 				const [form, setForm] = createStore<CreateParameters>(
 					params.source === "template"
-						? initializeTemplate(data() as Template & { instance?: Item })
+						? initializeTemplate(data() as Template & { instance: Item })
 						: initializeItem(data() as Item & { template?: Template }),
 				);
 
@@ -61,8 +61,8 @@ const Edit: Component = () => {
 					e.preventDefault();
 
 					if (params.source === "template") {
-						const template = data() as Template & { instance?: Item };
-						updateTemplate(template.id, template.instance!.id, form);
+						const template = data() as Template & { instance: Item };
+						updateTemplate(template.id, template.instance.id, form);
 					} else {
 						const item = data() as Item & { template?: Template };
 						const wasFuture = Temporal.PlainDate.compare(item.date, today()) > 0;
@@ -164,13 +164,13 @@ const initializeItem = (data: Item & { template?: Template }): CreateParameters 
 	};
 };
 
-const initializeTemplate = (data: Template & { instance?: Item }): CreateParameters => {
+const initializeTemplate = (data: Template & { instance: Item }): CreateParameters => {
 	const isEvent = data.type === "event";
 	return {
 		type: data.type,
 		text: data.text,
 		notes: data.notes,
-		date: data.instance?.date ?? today(),
+		date: data.instance.date,
 		start: isEvent ? (data as EventTemplate).start : undefined,
 		end: isEvent ? (data as EventTemplate).end : undefined,
 		mode: data.mode,

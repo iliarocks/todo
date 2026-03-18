@@ -1,5 +1,5 @@
 import { Temporal } from "temporal-polyfill";
-import { Component, createEffect, For, Show } from "solid-js";
+import { Component, For, Show } from "solid-js";
 import { db } from "../lib/db";
 import { parseItemWithTemplate, parseTemplateWithInstance } from "../lib/types";
 import { generateVirtualItems } from "../lib/repeat";
@@ -8,22 +8,27 @@ import { ListItem } from "../components/ListItem";
 
 const Upcoming: Component = () => {
 	const state = db.useQuery({
-		items: { template: {} },
+		items: {
+			$: { where: { date: { $gt: today().toString() } } },
+			template: {},
+		},
 		templates: { instance: {} },
 	});
-	const templates = () => (state().data?.templates ?? []).map(parseTemplateWithInstance);
-	const until = () => today().add({ weeks: 2 });
-	const virtual = () =>
-		templates().flatMap((tmpl) => generateVirtualItems(tmpl, tmpl.instance?.date ?? t(), until()));
-	const t = () => today();
-	const real = () =>
-		(state().data?.items ?? [])
-			.map(parseItemWithTemplate)
-			.filter((i) => Temporal.PlainDate.compare(i.date, t()) > 0);
-	const templateIds = () => new Set(templates().map((t) => t.id));
-	const items = () =>
-		[...real(), ...virtual()].sort((a, b) => Temporal.PlainDate.compare(a.date, b.date));
-	const itemsByDate = () => Object.groupBy(items(), ({ date }) => date.toString());
+	const templates = () =>
+		(state().data?.templates ?? []).flatMap((template) => {
+			const parsed = parseTemplateWithInstance(template);
+			return parsed ? [parsed] : [];
+		});
+	const templateIds = () => new Set(templates().map((template) => template.id));
+	const items = () => {
+		const real = (state().data?.items ?? []).map(parseItemWithTemplate);
+		const virtual = templates().flatMap((template) => {
+			return generateVirtualItems(template, template.instance.date, today().add({ weeks: 2 }));
+		});
+
+		return [...real, ...virtual].sort((a, b) => Temporal.PlainDate.compare(a.date, b.date));
+	};
+	const itemsByDate = () => Object.entries(Object.groupBy(items(), ({ date }) => date.toString()));
 
 	const formatDate = (iso: string) => {
 		const date = Temporal.PlainDate.from(iso);
@@ -36,7 +41,7 @@ const Upcoming: Component = () => {
 		<Show when={!state().error}>
 			<Show when={!state().isLoading}>
 				<div class="flex flex-col gap-2xl">
-					<For each={Object.entries(itemsByDate())}>
+					<For each={itemsByDate()}>
 						{([dateKey, itemGroup]) => {
 							const { weekday, monthDay } = formatDate(dateKey);
 

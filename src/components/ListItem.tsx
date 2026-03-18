@@ -72,12 +72,3 @@ export const ListItem: Component<{ item: Item; virtual?: boolean }> = (props) =>
 	return <EventItem event={props.item} virtual={virtual()} />;
 };
 
-export const OverlayItem: Component<{ item: Item; virtual?: boolean }> = (props) => {
-	const virtual = () => props.virtual ?? false;
-
-	return (
-		<div class="bg-[var(--accent)] rounded-md shadow-xs">
-			<ListItem item={props.item} virtual={virtual()} />
-		</div>
-	);
-};
