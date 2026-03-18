@@ -33,7 +33,7 @@ const Notes: Component = () => {
 				<div class="flex flex-col gap-m h-full justify-center">
 					<section class="flex justify-between text-[var(--secondary)]">
 						<h1>{data().text}</h1>
-						<Button><A href={`/edit/${data().type}/${params.type}/${params.id}`}>Edit</A></Button>
+						<Button><A href={`/edit/${params.type}/${params.id}`}>Edit</A></Button>
 					</section>
 					<Show when={data().notes}>{(notes) => <div innerHTML={marked.parse(notes()) as string} />}</Show>
 				</div>

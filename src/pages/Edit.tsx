@@ -27,7 +27,7 @@ import { between } from "../lib/order";
 import { Temporal } from "temporal-polyfill";
 
 const Edit: Component = () => {
-	const params = useParams<{ source: string; type: string; id: string }>();
+	const params = useParams<{ source: string; id: string }>();
 	const navigate = useNavigate();
 	const auth = db.useAuth();
 
@@ -51,8 +51,9 @@ const Edit: Component = () => {
 	return (
 		<Show when={loaded()}>
 			{(data) => {
+				const isTemplate = "instance" in data();
 				const [form, setForm] = createStore<CreateParameters>(
-					params.source === "template"
+					isTemplate
 						? initializeTemplate(data() as Template & { instance: Item })
 						: initializeItem(data() as Item & { template?: Template }),
 				);
@@ -60,7 +61,7 @@ const Edit: Component = () => {
 				const handleSubmit = (e: SubmitEvent) => {
 					e.preventDefault();
 
-					if (params.source === "template") {
+					if (isTemplate) {
 						const template = data() as Template & { instance: Item };
 						updateTemplate(template.id, template.instance.id, form);
 					} else {
@@ -73,11 +74,11 @@ const Edit: Component = () => {
 						updateItem(item.id, form, item.template?.id, order);
 					}
 
-					navigate(-1);
+					navigate(`/notes/${isTemplate ? "template" : "instance"}/${data().id}`);
 				};
 
 				const handleDelete = () => {
-					if (params.source === "template") {
+					if (isTemplate) {
 						deleteTemplate((data() as Template).id);
 					} else {
 						const user = auth().user;
@@ -86,7 +87,7 @@ const Edit: Component = () => {
 						}
 					}
 
-					navigate(-1);
+					navigate("/", { replace: true });
 				};
 
 				return (
@@ -111,7 +112,7 @@ const Edit: Component = () => {
 							onInput={(e) => setForm({ notes: e.currentTarget.value || undefined })}
 							multiline
 						/>
-						<Show when={params.source !== "template"}>
+						<Show when={!isTemplate}>
 							<section class="flex flex-col gap-xs">
 								<p class="text-xs text-[var(--secondary)]">WHEN</p>
 								<DateTimeInputs
@@ -125,7 +126,7 @@ const Edit: Component = () => {
 								/>
 							</section>
 						</Show>
-						<Show when={params.source === "template"}>
+						<Show when={isTemplate}>
 							<section class="flex flex-col gap-xs">
 								<p class="text-xs text-[var(--secondary)]">REPEAT</p>
 								<RepeatInputs
