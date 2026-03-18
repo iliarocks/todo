@@ -1,4 +1,4 @@
-import { A, useParams } from "@solidjs/router";
+import { A, useLocation, useParams } from "@solidjs/router";
 import { type Component, Show } from "solid-js";
 import { db } from "../lib/db";
 import { Item, parseItemWithTemplate, parseTemplate, Template } from "../lib/types";
@@ -8,6 +8,7 @@ import { marked } from "marked";
 
 const Notes: Component = () => {
 	const params = useParams<{ type: string; id: string }>();
+	const location = useLocation();
 
 	const isTemplate = () => params.type === "template";
 
@@ -33,7 +34,7 @@ const Notes: Component = () => {
 				<div class="flex flex-col gap-m h-full justify-center">
 					<section class="flex justify-between text-[var(--secondary)]">
 						<h1>{data().text}</h1>
-						<Button><A href={`/edit/${params.type}/${params.id}`}>Edit</A></Button>
+						<Button><A href={`/edit/${params.type}/${params.id}`} state={{ origin: (location.state as any)?.origin }}>Edit</A></Button>
 					</section>
 					<Show when={data().notes}>{(notes) => <div innerHTML={marked.parse(notes()) as string} />}</Show>
 				</div>

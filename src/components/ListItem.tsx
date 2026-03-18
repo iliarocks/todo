@@ -1,6 +1,6 @@
 import { Temporal } from "temporal-polyfill";
 import { Component, Show } from "solid-js";
-import { useNavigate } from "@solidjs/router";
+import { useLocation, useNavigate } from "@solidjs/router";
 import { db } from "../lib/db";
 import { Item, Todo, Event, Template } from "../lib/types";
 import { deleteItem } from "../lib/mutations";
@@ -12,6 +12,7 @@ const format = (t: Temporal.PlainTime) =>
 
 const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: boolean }> = (props) => {
 	const auth = db.useAuth();
+	const location = useLocation();
 	const navigate = useNavigate();
 	const todo = () => props.todo;
 	const virtual = () => props.virtual ?? false;
@@ -20,7 +21,7 @@ const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: bool
 
 	return (
 		<li
-			onClick={() => navigate(`/notes/${virtual() ? "template" : "instance"}/${todo().id}`)}
+			onClick={() => navigate(`/notes/${virtual() ? "template" : "instance"}/${todo().id}`, { state: { origin: location.pathname } })}
 			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
 		>
 			<p>{todo().text}</p>
@@ -43,13 +44,14 @@ const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: bool
 };
 
 const EventItem: Component<{ event: Event; virtual?: boolean }> = (props) => {
+	const location = useLocation();
 	const navigate = useNavigate();
 	const event = () => props.event;
 	const virtual = () => props.virtual ?? false;
 
 	return (
 		<li
-			onClick={() => navigate(`/notes/${virtual() ? "template" : "instance"}/${event().id}`)}
+			onClick={() => navigate(`/notes/${virtual() ? "template" : "instance"}/${event().id}`, { state: { origin: location.pathname } })}
 			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
 		>
 			<p>{event().text}</p>
