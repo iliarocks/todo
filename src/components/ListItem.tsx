@@ -1,19 +1,11 @@
 import { Temporal } from "temporal-polyfill";
 import { Component, Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { createSortable, useDragDropContext } from "@thisbeyond/solid-dnd";
 import { db } from "../lib/db";
 import { Item, Todo, Event } from "../lib/types";
 import { completeTodo } from "../lib/mutations";
 import Icon from "./Icon";
 
-declare module "solid-js" {
-	namespace JSX {
-		interface Directives {
-			sortable: true;
-		}
-	}
-}
 
 const format = (t: Temporal.PlainTime) =>
 	t.round({ smallestUnit: "minute" }).toString().slice(0, 5);
@@ -29,7 +21,7 @@ const TodoItem: Component<{ todo: Todo; virtual?: boolean }> = (props) => {
 	return (
 		<li
 			onClick={() => navigate(`/notes/${virtual() ? "template" : "instance"}/${todo().id}`)}
-			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--surface)]"
+			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
 		>
 			<p>{todo().text}</p>
 			{virtual() ? (
@@ -58,7 +50,7 @@ const EventItem: Component<{ event: Event; virtual?: boolean }> = (props) => {
 	return (
 		<li
 			onClick={() => navigate(`/notes/${virtual() ? "template" : "instance"}/${event().id}`)}
-			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--surface)]"
+			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
 		>
 			<p>{event().text}</p>
 			<Show when={event().start && event().end}>
@@ -80,31 +72,11 @@ export const ListItem: Component<{ item: Item; virtual?: boolean }> = (props) =>
 	return <EventItem event={props.item} virtual={virtual()} />;
 };
 
-export const Sortable = (props: { item: Item }) => {
-	const sortable = createSortable(props.item.id);
-	const [state] = useDragDropContext()!;
-	return (
-		<div
-			use:sortable
-			class="touch-none select-none"
-			classList={{
-				"transition-transform": !!state.active.draggable,
-			}}
-		>
-			{sortable.isActiveDraggable ? (
-				<div class="p-xs rounded-md bg-[var(--accent)]">&nbsp;</div>
-			) : (
-				<ListItem item={props.item} />
-			)}
-		</div>
-	);
-};
-
 export const OverlayItem: Component<{ item: Item; virtual?: boolean }> = (props) => {
 	const virtual = () => props.virtual ?? false;
 
 	return (
-		<div class="bg-[var(--surface)] rounded-md">
+		<div class="bg-[var(--accent)] rounded-md shadow-xs">
 			<ListItem item={props.item} virtual={virtual()} />
 		</div>
 	);

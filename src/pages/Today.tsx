@@ -6,12 +6,22 @@ import {
 	DragOverlay,
 	closestCenter,
 	type DragEvent,
+	createSortable,
+	useDragDropContext,
 } from "@thisbeyond/solid-dnd";
 import { db } from "../lib/db";
-import { parseItemWithTemplate } from "../lib/types";
+import { Item, parseItemWithTemplate } from "../lib/types";
 import { reorderItem, reconcileEvents } from "../lib/mutations";
 import { today } from "../lib/dates";
-import { OverlayItem, Sortable } from "../components/ListItem";
+import { ListItem } from "../components/ListItem";
+
+declare module "solid-js" {
+	namespace JSX {
+		interface Directives {
+			sortable: true;
+		}
+	}
+}
 
 const Today: Component = () => {
 	const auth = db.useAuth();
@@ -59,7 +69,7 @@ const Today: Component = () => {
 						<DragDropSensors />
 						<ul>
 							<SortableProvider ids={ids()}>
-								<For each={items()}>{(item) => <Sortable item={item} />}</For>
+								<For each={items()}>{(item) => <SortableItem item={item} />}</For>
 							</SortableProvider>
 						</ul>
 						<DragOverlay>
@@ -71,6 +81,34 @@ const Today: Component = () => {
 					</DragDropProvider>
 				</Show>
 			</Show>
+		</div>
+	);
+};
+
+const SortableItem = (props: { item: Item }) => {
+	const sortable = createSortable(props.item.id);
+	const [state] = useDragDropContext()!;
+	return (
+		<div
+			use:sortable
+			class="touch-none select-none"
+			classList={{
+				"transition-transform": !!state.active.draggable,
+			}}
+		>
+			{sortable.isActiveDraggable ? (
+				<div class="p-xs rounded-md bg-[var(--accent)]">&nbsp;</div>
+			) : (
+				<ListItem item={props.item} />
+			)}
+		</div>
+	);
+};
+
+const OverlayItem: Component<{ item: Item }> = (props) => {
+	return (
+		<div class="rounded-md bg-[var(--accent)] shadow-2xs">
+			<ListItem item={props.item} />
 		</div>
 	);
 };
