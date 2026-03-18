@@ -1,16 +1,16 @@
 import { Component, Show } from "solid-js";
 import { Temporal } from "temporal-polyfill";
 import Input from "./Input";
-import { parsePlainDate, parsePlainTime, today } from "../lib/dates";
+import { parseDate, parseTime, today } from "../lib/dates";
 
 const DateTimeInputs: Component<{
-	time?: boolean;
 	date: Temporal.PlainDate;
 	end: Temporal.PlainTime | undefined;
 	start: Temporal.PlainTime | undefined;
 	setDate: (date: Temporal.PlainDate) => void;
 	setStart: (start: Temporal.PlainTime | undefined) => void;
 	setEnd: (end: Temporal.PlainTime | undefined) => void;
+	time?: boolean;
 }> = (props) => {
 	return (
 		<div class="flex gap-xs">
@@ -18,7 +18,7 @@ const DateTimeInputs: Component<{
 				type="date"
 				value={props.date.toString()}
 				min={today().toString()}
-				onInput={(e) => props.setDate(parsePlainDate(e.currentTarget.value))}
+				onInput={(e) => props.setDate(parseDate(e.currentTarget.value))}
 				required
 			/>
 			<Show when={props.time}>
@@ -27,7 +27,7 @@ const DateTimeInputs: Component<{
 					value={props.start?.toString() ?? ""}
 					onInput={(e) => {
 						const value = e.currentTarget.value;
-						props.setStart(value ? parsePlainTime(value) : undefined);
+						props.setStart(value ? parseTime(value) : undefined);
 					}}
 				/>
 				<Input
@@ -35,7 +35,7 @@ const DateTimeInputs: Component<{
 					value={props.end?.toString() ?? ""}
 					onInput={(e) => {
 						const value = e.currentTarget.value;
-						props.setEnd(value ? parsePlainTime(value) : undefined);
+						props.setEnd(value ? parseTime(value) : undefined);
 					}}
 				/>
 			</Show>

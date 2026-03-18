@@ -10,7 +10,7 @@ import {
 	type DragEvent,
 } from "@thisbeyond/solid-dnd";
 import { db } from "../lib/db";
-import { parseItem, Item } from "../lib/types";
+import { parseItemWithTemplate, Item } from "../lib/types";
 import { reconcileEvents, reorderItems } from "../lib/mutations";
 import { today } from "../lib/dates";
 import TodoItem from "../components/TodoItem";
@@ -43,7 +43,7 @@ const Today: Component = () => {
 
 	const t = () => today();
 
-	const allItems = () => (state().data?.items ?? []).map(parseItem);
+	const allItems = () => (state().data?.items ?? []).map(parseItemWithTemplate);
 	const templateIds = () =>
 		new Set((state().data?.templates ?? []).map((t) => t.id));
 

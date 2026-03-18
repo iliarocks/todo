@@ -1,7 +1,7 @@
 import { Temporal } from "temporal-polyfill";
 import { Component, For, Show } from "solid-js";
 import { db } from "../lib/db";
-import { parseItem, parseTemplate } from "../lib/types";
+import { parseItemWithTemplate, parseTemplateWithInstance } from "../lib/types";
 import TodoItem from "../components/TodoItem";
 import { generateVirtualItems } from "../lib/repeat";
 import { today } from "../lib/dates";
@@ -12,13 +12,13 @@ const Upcoming: Component = () => {
 		items: { template: {} },
 		templates: { instance: {} },
 	});
-	const templates = () => (state().data?.templates ?? []).map(parseTemplate);
+	const templates = () => (state().data?.templates ?? []).map(parseTemplateWithInstance);
 	const until = () => today().add({ weeks: 2 });
 	const virtual = () =>
 		templates().flatMap((tmpl) => generateVirtualItems(tmpl, tmpl.instance?.date ?? t(), until()));
 	const t = () => today();
 	const real = () =>
-		(state().data?.items ?? []).map(parseItem).filter((i) => Temporal.PlainDate.compare(i.date, t()) > 0);
+		(state().data?.items ?? []).map(parseItemWithTemplate).filter((i) => Temporal.PlainDate.compare(i.date, t()) > 0);
 	const templateIds = () => new Set(templates().map((t) => t.id));
 	const items = () =>
 		[...real(), ...virtual()].sort((a, b) => Temporal.PlainDate.compare(a.date, b.date));

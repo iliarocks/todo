@@ -1,11 +1,13 @@
 import { Component, Show } from "solid-js";
 import Input from "./Input";
 import ToggleSelect from "./ToggleSelect";
-import { WEEK_DAYS, MONTH_DAYS } from "../lib/form";
-import { Mode, MODES, Type, Unit, UNITS } from "../lib/types";
+import { Mode, Unit, UNITS } from "../lib/types";
+
+const WEEK_DAYS = ["m", "t", "w", "t", "f", "s", "s"] as const;
+const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
 const RepeatInputs: Component<{
-	type: Type;
+	modes: Mode[];
 	mode: Mode | undefined;
 	interval: number | undefined;
 	unit: Unit | undefined;
@@ -15,18 +17,17 @@ const RepeatInputs: Component<{
 	setUnit: (unit: Unit | undefined) => void;
 	setAnchor: (anchor: number[] | undefined) => void;
 }> = (props) => {
-	const modes = () =>
-		props.type === "event" ? ["none", ...MODES.slice(0, -1)] : ["none", ...MODES];
+	const options = () => ["none" as const, ...props.modes];
 
 	const selectMode = (index: number) => {
-		const value = modes()[index];
+		const value = options()[index];
 		if (value === "none") {
 			props.setMode(undefined);
 			props.setInterval(undefined);
 			props.setUnit(undefined);
 			props.setAnchor(undefined);
 		} else {
-			props.setMode(value as Mode);
+			props.setMode(value);
 			props.setUnit("day");
 			props.setInterval(1);
 			props.setAnchor(value === "absolute" ? (props.unit !== "day" ? [0] : []) : undefined);
@@ -42,8 +43,8 @@ const RepeatInputs: Component<{
 	return (
 		<div class="flex flex-col gap-s">
 			<ToggleSelect
-				options={modes()}
-				selected={props.mode ? modes().indexOf(props.mode) : 0}
+				options={options()}
+				selected={props.mode ? options().indexOf(props.mode) : 0}
 				onSelect={selectMode}
 				single
 			/>

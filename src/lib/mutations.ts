@@ -1,7 +1,7 @@
 import { id } from "@instantdb/solidjs";
 import { Temporal } from "temporal-polyfill";
 import { db } from "./db";
-import { Item, Mode, Unit, Type, Todo } from "./types";
+import { Item, Mode, Unit, Type, Todo, Template } from "./types";
 import { nextDate } from "./repeat";
 
 export type CreateParameters = {
@@ -38,6 +38,7 @@ export const createItem = (params: CreateParameters, user: { id: string }) => {
 		transactions.push(
 			db.tx.templates[id()]
 				.create({
+					type,
 					text,
 					start: start?.toString(),
 					end: end?.toString(),
@@ -55,15 +56,7 @@ export const createItem = (params: CreateParameters, user: { id: string }) => {
 	db.transact(transactions);
 };
 
-export type EditParameters = {
-	text: string;
-	date: Temporal.PlainDate;
-	start?: Temporal.PlainTime;
-	end?: Temporal.PlainTime;
-	notes?: string;
-};
-
-export const updateItem = (itemId: string, params: EditParameters, templateId?: string) => {
+export const updateItem = (itemId: string, params: CreateParameters, templateId?: string) => {
 	const { text, date, start, end, notes } = params;
 	const transactions: any[] = [
 		db.tx.items[itemId].update({
@@ -89,14 +82,19 @@ export const updateItem = (itemId: string, params: EditParameters, templateId?: 
 	db.transact(transactions);
 };
 
-export const updateTemplate = (templateId: string, instanceId: string, params: EditParameters) => {
-	const { text, date, start, end, notes } = params;
+export const updateTemplate = (templateId: string, instanceId: string, params: CreateParameters) => {
+	const { text, date, start, end, notes, mode, unit, interval, anchor } = params;
 	db.transact([
 		db.tx.templates[templateId].update({
 			text,
 			start: start?.toString(),
 			end: end?.toString(),
 			notes,
+			mode,
+			unit,
+			interval,
+			anchor,
+			reference: mode === "absolute" ? date.toString() : undefined,
 		}),
 		db.tx.items[instanceId].update({
 			text,
@@ -108,8 +106,8 @@ export const updateTemplate = (templateId: string, instanceId: string, params: E
 	]);
 };
 
-export const deleteItem = (item: Item, user: { id: string }) => {
-	if (!item.template) {
+export const deleteItem = (item: Item & { template?: Template }, user: { id: string }) => {
+	if (item.template === undefined) {
 		db.transact([db.tx.items[item.id].delete()]);
 		return;
 	}
@@ -155,7 +153,7 @@ export const reorderItems = (ids: string[]) => {
 	);
 };
 
-export const completeTodo = (todo: Todo, user: { id: string }) => {
+export const completeTodo = (todo: Todo & { template?: Template }, user: { id: string }) => {
 	if (!todo.template) {
 		db.transact([db.tx.items[todo.id].delete()]);
 		return;

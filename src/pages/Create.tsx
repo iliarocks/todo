@@ -9,7 +9,7 @@ import { db } from "../lib/db";
 import DateTimeInputs from "../components/DateTimeInputs";
 import RepeatInputs from "../components/RepeatInputs";
 import { now, today } from "../lib/dates";
-import { TYPES } from "../lib/types";
+import { Type, MODES, TYPES } from "../lib/types";
 
 const Create: Component = () => {
 	const auth = db.useAuth();
@@ -27,13 +27,15 @@ const Create: Component = () => {
 		}
 	};
 
+	const resetForm = (type: Type) => setForm(defaultForm(type, form.text, form.notes));
+
 	return (
 		<form onSubmit={handleSubmit} class="flex flex-col gap-s">
 			<section class="flex justify-between items-center">
 				<ToggleSelect
 					options={TYPES}
 					selected={TYPES.indexOf(form.type)}
-					onSelect={(i) => setForm(defaultForm(TYPES[i]))}
+					onSelect={(i) => resetForm(TYPES[i])}
 					single
 				/>
 				<Button type="submit">Save</Button>
@@ -67,7 +69,7 @@ const Create: Component = () => {
 			<section class="flex flex-col gap-xs">
 				<p class="text-xs text-[var(--secondary)]">REPEAT</p>
 				<RepeatInputs
-					type={form.type}
+					modes={form.type === "event" ? MODES.slice(0, -1) : [...MODES]}
 					mode={form.mode}
 					interval={form.interval}
 					unit={form.unit}
@@ -82,10 +84,10 @@ const Create: Component = () => {
 	);
 };
 
-const defaultForm = (type: CreateParameters["type"]): CreateParameters => ({
+const defaultForm = (type: Type, text?: string, notes?: string) => ({
 	type,
-	text: "",
-	notes: undefined,
+	text: text ?? "",
+	notes: notes ?? undefined,
 	date: today(),
 	start: type === "todo" ? undefined : now(),
 	end: type === "todo" ? undefined : now(),

@@ -52,17 +52,17 @@ export const nextDate = (date: Temporal.PlainDate, repeat: Repeat): Temporal.Pla
 	);
 };
 
-const toVirtualItem = (template: Template, date: Temporal.PlainDate): Item => {
+const toVirtualItem = (template: Template & { instance?: Item }, date: Temporal.PlainDate): Item => {
 	const instance = template.instance!;
 	const base = { id: template.id, text: template.text, notes: template.notes, date };
-	if (instance.type === "event") {
+	if (template.type === "event") {
 		return { ...base, type: "event", start: template.start, end: template.end };
 	}
 	return { ...base, type: "todo" };
 };
 
 export const generateVirtualItems = (
-	template: Template,
+	template: Template & { instance?: Item },
 	after: Temporal.PlainDate,
 	until: Temporal.PlainDate,
 ): Item[] => {
