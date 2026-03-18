@@ -1,11 +1,10 @@
 import { Temporal } from "temporal-polyfill";
-import { Component, For, Show } from "solid-js";
+import { Component, createEffect, For, Show } from "solid-js";
 import { db } from "../lib/db";
 import { parseItemWithTemplate, parseTemplateWithInstance } from "../lib/types";
-import TodoItem from "../components/TodoItem";
 import { generateVirtualItems } from "../lib/repeat";
 import { today } from "../lib/dates";
-import EventItem from "../components/EventItem";
+import { ListItem } from "../components/ListItem";
 
 const Upcoming: Component = () => {
 	const state = db.useQuery({
@@ -18,7 +17,9 @@ const Upcoming: Component = () => {
 		templates().flatMap((tmpl) => generateVirtualItems(tmpl, tmpl.instance?.date ?? t(), until()));
 	const t = () => today();
 	const real = () =>
-		(state().data?.items ?? []).map(parseItemWithTemplate).filter((i) => Temporal.PlainDate.compare(i.date, t()) > 0);
+		(state().data?.items ?? [])
+			.map(parseItemWithTemplate)
+			.filter((i) => Temporal.PlainDate.compare(i.date, t()) > 0);
 	const templateIds = () => new Set(templates().map((t) => t.id));
 	const items = () =>
 		[...real(), ...virtual()].sort((a, b) => Temporal.PlainDate.compare(a.date, b.date));
@@ -47,13 +48,7 @@ const Upcoming: Component = () => {
 									</header>
 									<ul>
 										<For each={itemGroup}>
-											{(item) => {
-												return item.type === "todo" ? (
-													<TodoItem todo={item} virtual={templateIds().has(item.id)} />
-												) : (
-													<EventItem event={item} virtual={templateIds().has(item.id)} />
-												);
-											}}
+											{(item) => <ListItem item={item} virtual={templateIds().has(item.id)} />}
 										</For>
 									</ul>
 								</section>

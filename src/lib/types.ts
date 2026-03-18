@@ -33,7 +33,7 @@ export type Todo = {
 	date: Temporal.PlainDate;
 	text: string;
 	notes?: string;
-	order?: string;
+	order: string;
 };
 export type Event = {
 	id: string;
@@ -41,7 +41,7 @@ export type Event = {
 	date: Temporal.PlainDate;
 	text: string;
 	notes?: string;
-	order?: string;
+	order: string;
 	start?: Temporal.PlainTime;
 	end?: Temporal.PlainTime;
 };

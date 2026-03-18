@@ -15,11 +15,11 @@ const _schema = i.schema({
 		items: i.entity({
 			type: i.string(),
 			text: i.string(),
-			date: i.string(),
+			date: i.string().indexed(),
 			start: i.string().optional(),
 			end: i.string().optional(),
 			notes: i.string().optional(),
-			order: i.string().optional(),
+			order: i.string().indexed(),
 		}),
 		templates: i.entity({
 			type: i.string(),

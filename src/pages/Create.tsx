@@ -14,15 +14,19 @@ import { Type, MODES, TYPES } from "../lib/types";
 const Create: Component = () => {
 	const auth = db.useAuth();
 	const navigate = useNavigate();
+	const orderState = db.useQuery({
+		items: { $: { order: { order: "desc" }, limit: 1 } },
+	});
 	const [form, setForm] = createStore<CreateParameters>(defaultForm("todo"));
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 
 		const user = auth().user;
+		const lastOrder = orderState().data?.items?.[0]?.order;
 
 		if (user) {
-			createItem(form, user);
+			createItem(form, user, lastOrder);
 			navigate(-1);
 		}
 	};

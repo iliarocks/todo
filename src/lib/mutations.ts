@@ -1,8 +1,10 @@
 import { id } from "@instantdb/solidjs";
 import { Temporal } from "temporal-polyfill";
 import { db } from "./db";
-import { Item, Mode, Unit, Type, Todo, Template } from "./types";
+import { Item, Mode, Unit, Type, Todo, Template, Event } from "./types";
 import { nextDate } from "./repeat";
+import { between } from "./order";
+import { now, today } from "./dates";
 
 export type CreateParameters = {
 	type: Type;
@@ -17,7 +19,7 @@ export type CreateParameters = {
 	anchor?: number[];
 };
 
-export const createItem = (params: CreateParameters, user: { id: string }) => {
+export const createItem = (params: CreateParameters, user: { id: string }, lastOrder?: string) => {
 	const { type, text, date, start, end, notes, mode, unit, interval, anchor } = params;
 	const itemId = id();
 
@@ -30,6 +32,7 @@ export const createItem = (params: CreateParameters, user: { id: string }) => {
 				start: start?.toString(),
 				end: end?.toString(),
 				notes,
+				order: between(lastOrder, undefined),
 			})
 			.link({ user: user.id }),
 	];
@@ -56,17 +59,17 @@ export const createItem = (params: CreateParameters, user: { id: string }) => {
 	db.transact(transactions);
 };
 
-export const updateItem = (itemId: string, params: CreateParameters, templateId?: string) => {
+export const updateItem = (itemId: string, params: CreateParameters, templateId?: string, order?: string) => {
 	const { text, date, start, end, notes } = params;
-	const transactions: any[] = [
-		db.tx.items[itemId].update({
-			text,
-			date: date.toString(),
-			start: start?.toString(),
-			end: end?.toString(),
-			notes,
-		}),
-	];
+	const update: Record<string, any> = {
+		text,
+		date: date.toString(),
+		start: start?.toString(),
+		end: end?.toString(),
+		notes,
+	};
+	if (order !== undefined) update.order = order;
+	const transactions: any[] = [db.tx.items[itemId].update(update)];
 
 	if (templateId) {
 		transactions.push(
@@ -82,8 +85,16 @@ export const updateItem = (itemId: string, params: CreateParameters, templateId?
 	db.transact(transactions);
 };
 
-export const updateTemplate = (templateId: string, instanceId: string, params: CreateParameters) => {
+export const updateTemplate = (templateId: string, instanceId: string, params: CreateParameters, order?: string) => {
 	const { text, date, start, end, notes, mode, unit, interval, anchor } = params;
+	const instanceUpdate: Record<string, any> = {
+		text,
+		date: date.toString(),
+		start: start?.toString(),
+		end: end?.toString(),
+		notes,
+	};
+	if (order !== undefined) instanceUpdate.order = order;
 	db.transact([
 		db.tx.templates[templateId].update({
 			text,
@@ -96,13 +107,7 @@ export const updateTemplate = (templateId: string, instanceId: string, params: C
 			anchor,
 			reference: mode === "absolute" ? date.toString() : undefined,
 		}),
-		db.tx.items[instanceId].update({
-			text,
-			date: date.toString(),
-			start: start?.toString(),
-			end: end?.toString(),
-			notes,
-		}),
+		db.tx.items[instanceId].update(instanceUpdate),
 	]);
 };
 
@@ -128,6 +133,7 @@ export const deleteItem = (item: Item & { template?: Template }, user: { id: str
 				start,
 				end,
 				notes: template.notes,
+				order: item.order,
 			})
 			.link({ user: user.id }),
 		db.tx.templates[template.id].link({ instance: newItemId }),
@@ -139,18 +145,8 @@ export const deleteTemplate = (templateId: string) => {
 	db.transact([db.tx.templates[templateId].delete()]);
 };
 
-export const reconcileEvents = (items: Item[]) => {
-	const stale = items.filter((i) => i.type === "event");
-	if (stale.length === 0) return;
-	db.transact(stale.map((i) => db.tx.items[i.id].delete()));
-};
-
-export const reorderItems = (ids: string[]) => {
-	db.transact(
-		ids.map((itemId, i) =>
-			db.tx.items[itemId].update({ order: String(i).padStart(5, "0") }),
-		),
-	);
+export const reorderItem = (itemId: string, before: string | undefined, after: string | undefined) => {
+	db.transact([db.tx.items[itemId].update({ order: between(before, after) })]);
 };
 
 export const completeTodo = (todo: Todo & { template?: Template }, user: { id: string }) => {
@@ -170,9 +166,49 @@ export const completeTodo = (todo: Todo & { template?: Template }, user: { id: s
 				text: template.text,
 				date: date.toString(),
 				notes: template.notes,
+				order: todo.order,
 			})
 			.link({ user: user.id }),
 		db.tx.templates[template.id].link({ instance: newItemId }),
 		db.tx.items[todo.id].delete(),
 	]);
+};
+
+export const reconcileEvents = (events: (Event & { template?: Template })[], user: { id: string }) => {
+	if (events.length === 0) return;
+
+	const expired = events.filter((e) => {
+		return (
+			Temporal.PlainDate.compare(e.date, today()) < 0 ||
+			Temporal.PlainTime.compare(e.end ?? now(), now()) < 0
+		);
+	});
+
+	if (expired.length === 0) return;
+
+	const transactions: any[] = [];
+
+	for (const e of expired) {
+		if (e.template) {
+			const date = nextDate(e.date, e.template);
+			const newItemId = id();
+			transactions.push(
+				db.tx.items[newItemId]
+					.create({
+						type: "event",
+						text: e.template.text,
+						date: date.toString(),
+						start: e.template.type === "event" ? e.template.start?.toString() : undefined,
+						end: e.template.type === "event" ? e.template.end?.toString() : undefined,
+						notes: e.template.notes,
+						order: e.order,
+					})
+					.link({ user: user.id }),
+				db.tx.templates[e.template.id].link({ instance: newItemId }),
+			);
+		}
+		transactions.push(db.tx.items[e.id].delete());
+	}
+
+	db.transact(transactions);
 };

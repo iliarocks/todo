@@ -54,7 +54,7 @@ export const nextDate = (date: Temporal.PlainDate, repeat: Repeat): Temporal.Pla
 
 const toVirtualItem = (template: Template & { instance?: Item }, date: Temporal.PlainDate): Item => {
 	const instance = template.instance!;
-	const base = { id: template.id, text: template.text, notes: template.notes, date };
+	const base = { id: template.id, text: template.text, notes: template.notes, date, order: instance.order };
 	if (template.type === "event") {
 		return { ...base, type: "event", start: template.start, end: template.end };
 	}

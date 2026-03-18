@@ -23,6 +23,8 @@ import {
 	deleteItem,
 	deleteTemplate,
 } from "../lib/mutations";
+import { between } from "../lib/order";
+import { Temporal } from "temporal-polyfill";
 
 const Edit: Component = () => {
 	const params = useParams<{ source: string; type: string; id: string }>();
@@ -32,6 +34,9 @@ const Edit: Component = () => {
 	const itemQuery = db.useQuery({ items: { template: {}, $: { where: { id: params.id } } } });
 	const templateQuery = db.useQuery({
 		templates: { instance: {}, $: { where: { id: params.id } } },
+	});
+	const orderState = db.useQuery({
+		items: { $: { order: { order: "desc" }, limit: 1 } },
 	});
 
 	const loaded = () => {
@@ -60,7 +65,12 @@ const Edit: Component = () => {
 						updateTemplate(template.id, template.instance!.id, form);
 					} else {
 						const item = data() as Item & { template?: Template };
-						updateItem(item.id, form, item.template?.id);
+						const wasFuture = Temporal.PlainDate.compare(item.date, today()) > 0;
+						const isNow = Temporal.PlainDate.compare(form.date, today()) <= 0;
+						const order = wasFuture && isNow
+							? between(orderState().data?.items?.[0]?.order, undefined)
+							: undefined;
+						updateItem(item.id, form, item.template?.id, order);
 					}
 
 					navigate(-1);
