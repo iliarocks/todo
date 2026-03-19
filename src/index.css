@@ -42,6 +42,16 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+.footer-enter-active,
+.footer-exit-active {
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+.footer-enter-from,
+.footer-exit-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
 @media (prefers-reduced-motion) {
   *,
   ::before,

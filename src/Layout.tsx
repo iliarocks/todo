@@ -7,9 +7,7 @@ import { deleteItem } from "./lib/mutations";
 import { parseItemWithTemplate } from "./lib/types";
 import { now, today } from "./lib/dates";
 import Login from "./pages/Login";
-import Icon from "./components/Icon";
-import Button from "./components/Button";
-import { useNavigateFromList, useNavigateToList } from "./lib/navigation";
+import Footer from "./components/Footer";
 
 const Layout: ParentComponent = (props) => {
 	onMount(() => inject());
@@ -50,39 +48,6 @@ const Layout: ParentComponent = (props) => {
 						<Footer />
 					</div>
 				</Show>
-			</Show>
-		</div>
-	);
-};
-
-const Footer = () => {
-	const location = useLocation();
-	const navigateFromList = useNavigateFromList();
-	const navigateToList = useNavigateToList();
-	const showClose = () =>
-		location.pathname === "/menu" ||
-		location.pathname === "/create" ||
-		location.pathname.startsWith("/edit/") ||
-		location.pathname.startsWith("/notes/");
-
-	return (
-		<div class="flex justify-center gap-l p-s">
-			<Show
-				when={showClose()}
-				fallback={
-					<>
-						<Button onClick={() => navigateFromList("/menu")}>
-							<Icon>more_vert</Icon>
-						</Button>
-						<Button onClick={() => navigateFromList("/create")}>
-							<Icon>playlist_add</Icon>
-						</Button>
-					</>
-				}
-			>
-				<Button onClick={navigateToList}>
-					<Icon>close</Icon>
-				</Button>
 			</Show>
 		</div>
 	);
