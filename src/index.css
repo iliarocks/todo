@@ -49,7 +49,6 @@ input[type="number"] {
 .footer-enter-from,
 .footer-exit-to {
   opacity: 0;
-  transform: translateY(6px);
 }
 
 @media (prefers-reduced-motion) {
