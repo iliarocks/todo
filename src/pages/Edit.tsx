@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, useParams } from "@solidjs/router";
+import { useNavigate, useParams } from "@solidjs/router";
 import { type Component, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { db } from "../lib/db";
@@ -25,11 +25,12 @@ import {
 } from "../lib/mutations";
 import { between } from "../lib/order";
 import { Temporal } from "temporal-polyfill";
+import { useNavigateToList } from "../lib/navigation";
 
 const Edit: Component = () => {
 	const params = useParams<{ source: string; id: string }>();
-	const location = useLocation();
 	const navigate = useNavigate();
+	const navigateToList = useNavigateToList();
 	const auth = db.useAuth();
 
 	const itemQuery = db.useQuery({ items: { template: {}, $: { where: { id: params.id } } } });
@@ -88,7 +89,7 @@ const Edit: Component = () => {
 						}
 					}
 
-					navigate((location.state as any)?.origin ?? "/upcoming", { replace: true });
+					navigateToList();
 				};
 
 				return (

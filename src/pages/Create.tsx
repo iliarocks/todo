@@ -1,5 +1,4 @@
 import { type Component } from "solid-js";
-import { useNavigate } from "@solidjs/router";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import { createStore } from "solid-js/store";
@@ -10,10 +9,11 @@ import DateTimeInputs from "../components/DateTimeInputs";
 import RepeatInputs from "../components/RepeatInputs";
 import { now, today } from "../lib/dates";
 import { Type, MODES, TYPES } from "../lib/types";
+import { useNavigateToList } from "../lib/navigation";
 
 const Create: Component = () => {
 	const auth = db.useAuth();
-	const navigate = useNavigate();
+	const navigateToList = useNavigateToList();
 	const orderState = db.useQuery({
 		items: { $: { order: { order: "desc" }, limit: 1 } },
 	});
@@ -27,7 +27,7 @@ const Create: Component = () => {
 
 		if (user) {
 			createItem(form, user, lastOrder);
-			navigate(-1);
+			navigateToList();
 		}
 	};
 

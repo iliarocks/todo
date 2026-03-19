@@ -1,4 +1,4 @@
-import { A, useLocation, useNavigate } from "@solidjs/router";
+import { useLocation } from "@solidjs/router";
 import { ParentComponent, Show, createEffect, on, onMount } from "solid-js";
 import { inject } from "@vercel/analytics";
 import { Temporal } from "temporal-polyfill";
@@ -9,6 +9,7 @@ import { now, today } from "./lib/dates";
 import Login from "./pages/Login";
 import Icon from "./components/Icon";
 import Button from "./components/Button";
+import { useNavigateFromList, useNavigateToList } from "./lib/navigation";
 
 const Layout: ParentComponent = (props) => {
 	onMount(() => inject());
@@ -59,7 +60,8 @@ const Layout: ParentComponent = (props) => {
 
 const Footer = () => {
 	const location = useLocation();
-	const navigate = useNavigate();
+	const navigateFromList = useNavigateFromList();
+	const navigateToList = useNavigateToList();
 	const showClose = () =>
 		location.pathname === "/menu" ||
 		location.pathname === "/create" ||
@@ -72,16 +74,16 @@ const Footer = () => {
 				when={showClose()}
 				fallback={
 					<>
-						<A href="/menu">
+						<Button onClick={() => navigateFromList("/menu")}>
 							<Icon>more_vert</Icon>
-						</A>
-						<A href="/create">
+						</Button>
+						<Button onClick={() => navigateFromList("/create")}>
 							<Icon>playlist_add</Icon>
-						</A>
+						</Button>
 					</>
 				}
 			>
-				<Button onClick={() => navigate(-1)}>
+				<Button onClick={navigateToList}>
 					<Icon>close</Icon>
 				</Button>
 			</Show>

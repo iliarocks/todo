@@ -1,19 +1,19 @@
 import { Temporal } from "temporal-polyfill";
 import { Component, Show } from "solid-js";
-import { useLocation, useNavigate } from "@solidjs/router";
 import { db } from "../lib/db";
 import { Item, Todo, Event, Template } from "../lib/types";
 import { deleteItem } from "../lib/mutations";
 import Icon from "./Icon";
-
+import { useNavigateFromList } from "../lib/navigation";
 
 const format = (t: Temporal.PlainTime) =>
 	t.round({ smallestUnit: "minute" }).toString().slice(0, 5);
 
-const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: boolean }> = (props) => {
+const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: boolean }> = (
+	props,
+) => {
 	const auth = db.useAuth();
-	const location = useLocation();
-	const navigate = useNavigate();
+	const navigateFromList = useNavigateFromList();
 	const todo = () => props.todo;
 	const virtual = () => props.virtual ?? false;
 
@@ -21,7 +21,7 @@ const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: bool
 
 	return (
 		<li
-			onClick={() => navigate(`/notes/${virtual() ? "template" : "instance"}/${todo().id}`, { state: { origin: location.pathname } })}
+			onClick={() => navigateFromList(`/notes/${virtual() ? "template" : "instance"}/${todo().id}`)}
 			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
 		>
 			<p>{todo().text}</p>
@@ -44,14 +44,15 @@ const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: bool
 };
 
 const EventItem: Component<{ event: Event; virtual?: boolean }> = (props) => {
-	const location = useLocation();
-	const navigate = useNavigate();
+	const navigateFromList = useNavigateFromList();
 	const event = () => props.event;
 	const virtual = () => props.virtual ?? false;
 
 	return (
 		<li
-			onClick={() => navigate(`/notes/${virtual() ? "template" : "instance"}/${event().id}`, { state: { origin: location.pathname } })}
+			onClick={() =>
+				navigateFromList(`/notes/${virtual() ? "template" : "instance"}/${event().id}`)
+			}
 			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
 		>
 			<p>{event().text}</p>
@@ -64,7 +65,9 @@ const EventItem: Component<{ event: Event; virtual?: boolean }> = (props) => {
 	);
 };
 
-const ListItem: Component<{ item: Item & { template?: Template }; virtual?: boolean }> = (props) => {
+const ListItem: Component<{ item: Item & { template?: Template }; virtual?: boolean }> = (
+	props,
+) => {
 	const virtual = () => props.virtual ?? false;
 
 	if (props.item.type === "todo") {
@@ -75,4 +78,3 @@ const ListItem: Component<{ item: Item & { template?: Template }; virtual?: bool
 };
 
 export default ListItem;
-
