@@ -18,10 +18,5 @@ const midpoint = (a: string, b: string): string => {
 };
 
 export const between = (before: string | undefined, after: string | undefined): string => {
-	const a = before ?? "";
-	const b = after ?? "";
-	if (a === "" && b === "") return MID;
-	if (a === "") return midpoint("", b);
-	if (b === "") return a + MID;
-	return midpoint(a, b);
+	return midpoint(before ?? "", after ?? "");
 };
