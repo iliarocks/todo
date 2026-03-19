@@ -2,7 +2,7 @@ import { useLocation } from "@solidjs/router";
 import { ParentComponent, Show, createEffect, on, onMount } from "solid-js";
 import { inject } from "@vercel/analytics";
 import { Temporal } from "temporal-polyfill";
-import { db } from "./lib/db";
+import { db, queries } from "./lib/db";
 import { deleteItem } from "./lib/mutations";
 import { parseItemWithTemplate } from "./lib/types";
 import { now, today } from "./lib/dates";
@@ -17,18 +17,15 @@ const Layout: ParentComponent = (props) => {
 	const location = useLocation();
 	const isListPage = () => location.pathname === "/" || location.pathname === "/upcoming";
 
-	const state = db.useQuery({
-		items: {
-			$: { where: { date: { $lte: today().add({ days: 1 }).toString() } } },
-			template: {},
-		},
+	const state = db.useQuery(() => {
+		const user = auth().user;
+		return user ? queries(user.id).expiring : null;
 	});
 	const items = () => (state().data?.items ?? []).map(parseItemWithTemplate);
 
 	createEffect(
 		on(items, (is) => {
 			const user = auth().user;
-
 			if (user) {
 				const events = is.filter((i) => i.type === "event");
 				const expired = events.filter(

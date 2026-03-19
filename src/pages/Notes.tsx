@@ -1,6 +1,6 @@
 import { A, useLocation, useParams } from "@solidjs/router";
 import { type Component, Show } from "solid-js";
-import { db } from "../lib/db";
+import { db, queries } from "../lib/db";
 import { Item, parseItemWithTemplate, parseTemplate, Template } from "../lib/types";
 import Button from "../components/Button";
 import { marked } from "marked";
@@ -9,12 +9,16 @@ import { marked } from "marked";
 const Notes: Component = () => {
 	const params = useParams<{ type: string; id: string }>();
 	const location = useLocation();
-
 	const isTemplate = () => params.type === "template";
 
-	const itemQuery = db.useQuery({ items: { template: {}, $: { where: { id: params.id } } } });
-	const templateQuery = db.useQuery({
-		templates: { instance: {}, $: { where: { id: params.id } } },
+	const auth = db.useAuth();
+	const itemQuery = db.useQuery(() => {
+		const user = auth().user;
+		return user ? queries(user.id).itemById(params.id) : null;
+	});
+	const templateQuery = db.useQuery(() => {
+		const user = auth().user;
+		return user ? queries(user.id).templateById(params.id) : null;
 	});
 
 	const item = (): Item | Template | undefined => {

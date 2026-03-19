@@ -4,7 +4,7 @@ import Input from "../components/Input";
 import { createStore } from "solid-js/store";
 import ToggleSelect from "../components/ToggleSelect";
 import { createItem, CreateParameters } from "../lib/mutations";
-import { db } from "../lib/db";
+import { db, queries } from "../lib/db";
 import DateTimeInputs from "../components/DateTimeInputs";
 import RepeatInputs from "../components/RepeatInputs";
 import { now, today } from "../lib/dates";
@@ -14,8 +14,9 @@ import { useNavigateToList } from "../lib/navigation";
 const Create: Component = () => {
 	const auth = db.useAuth();
 	const navigateToList = useNavigateToList();
-	const orderState = db.useQuery({
-		items: { $: { order: { order: "desc" }, limit: 1 } },
+	const orderState = db.useQuery(() => {
+		const user = auth().user;
+		return user ? queries(user.id).lastOrder : null;
 	});
 	const [form, setForm] = createStore<CreateParameters>(defaultForm("todo"));
 

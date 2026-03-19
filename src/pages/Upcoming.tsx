@@ -1,18 +1,16 @@
 import { Temporal } from "temporal-polyfill";
 import { Component, For, Show } from "solid-js";
-import { db } from "../lib/db";
+import { db, queries } from "../lib/db";
 import { parseItemWithTemplate, parseTemplateWithInstance } from "../lib/types";
 import { generateVirtualItems } from "../lib/repeat";
 import { today } from "../lib/dates";
 import ListItem from "../components/ListItem";
 
 const Upcoming: Component = () => {
-	const state = db.useQuery({
-		items: {
-			$: { where: { date: { $gt: today().toString() } } },
-			template: {},
-		},
-		templates: { instance: {} },
+	const auth = db.useAuth();
+	const state = db.useQuery(() => {
+		const user = auth().user;
+		return user ? queries(user.id).upcoming : null;
 	});
 	const templates = () =>
 		(state().data?.templates ?? []).flatMap((template) => {

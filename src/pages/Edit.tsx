@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import { type Component, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import { db } from "../lib/db";
+import { db, queries } from "../lib/db";
 import {
 	parseItemWithTemplate,
 	parseTemplateWithInstance,
@@ -33,12 +33,17 @@ const Edit: Component = () => {
 	const navigateToList = useNavigateToList();
 	const auth = db.useAuth();
 
-	const itemQuery = db.useQuery({ items: { template: {}, $: { where: { id: params.id } } } });
-	const templateQuery = db.useQuery({
-		templates: { instance: {}, $: { where: { id: params.id } } },
+	const itemQuery = db.useQuery(() => {
+		const user = auth().user;
+		return user ? queries(user.id).itemById(params.id) : null;
 	});
-	const orderState = db.useQuery({
-		items: { $: { order: { order: "desc" }, limit: 1 } },
+	const templateQuery = db.useQuery(() => {
+		const user = auth().user;
+		return user ? queries(user.id).templateById(params.id) : null;
+	});
+	const orderState = db.useQuery(() => {
+		const user = auth().user;
+		return user ? queries(user.id).lastOrder : null;
 	});
 
 	const loaded = () => {

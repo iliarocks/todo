@@ -9,10 +9,9 @@ import {
 	createSortable,
 	useDragDropContext,
 } from "@thisbeyond/solid-dnd";
-import { db } from "../lib/db";
+import { db, queries } from "../lib/db";
 import { Item, Template, parseItemWithTemplate } from "../lib/types";
 import { reorderItem } from "../lib/mutations";
-import { today } from "../lib/dates";
 import ListItem from "../components/ListItem";
 
 declare module "solid-js" {
@@ -24,11 +23,10 @@ declare module "solid-js" {
 }
 
 const Today: Component = () => {
-	const state = db.useQuery({
-		items: {
-			$: { where: { date: { $lte: today().toString() } }, order: { order: "asc" } },
-			template: {},
-		},
+	const auth = db.useAuth();
+	const state = db.useQuery(() => {
+		const user = auth().user;
+		return user ? queries(user.id).today : null;
 	});
 
 	const items = () => (state().data?.items ?? []).map(parseItemWithTemplate);
