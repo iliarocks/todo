@@ -33,7 +33,8 @@ const Layout: ParentComponent = (props) => {
 				const expired = events.filter(
 					(e) =>
 						Temporal.PlainDate.compare(e.date, today()) < 0 ||
-						Temporal.PlainTime.compare(e.end ?? now(), now()) < 0,
+						(Temporal.PlainDate.compare(e.date, today()) === 0 &&
+							Temporal.PlainTime.compare(e.end ?? now(), now()) < 0),
 				);
 				for (const e of expired) deleteItem(e, user);
 			}
