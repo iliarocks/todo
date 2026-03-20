@@ -9,12 +9,11 @@ import { now, today } from "./lib/dates";
 import Login from "./pages/Login";
 import Footer from "./components/Footer";
 import { AuthProvider } from "./context/auth";
+import { Transition } from "solid-transition-group";
 
 const Layout: ParentComponent = (props) => {
 	onMount(() => inject());
 	const auth = db.useAuth();
-	const location = useLocation();
-	const isListPage = () => location.pathname === "/" || location.pathname === "/upcoming";
 
 	const state = db.useQuery(() => {
 		const user = auth().user;
@@ -45,8 +44,8 @@ const Layout: ParentComponent = (props) => {
 					{(user) => (
 						<AuthProvider user={user()}>
 							<div class="flex flex-col h-full w-full">
-								<main class={`grow overflow-y-scroll py-m ${isListPage() ? "px-s" : "px-m"}`}>
-									{props.children}
+								<main class={`grow overflow-y-scroll py-m px-s`}>
+									<Transition name="page" mode="outin">{props.children}</Transition>
 								</main>
 								<Footer />
 							</div>
