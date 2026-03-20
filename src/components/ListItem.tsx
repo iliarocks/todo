@@ -26,7 +26,7 @@ const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: bool
 		>
 			<p>{todo().text}</p>
 			{virtual() ? (
-				<Icon size={16}>repeat</Icon>
+				<Icon size={15}>repeat</Icon>
 			) : (
 				<button
 					onClick={(e) => {
@@ -36,7 +36,7 @@ const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: bool
 					onPointerDown={(e) => e.stopPropagation()}
 					class="flex text-[var(--secondary)] hover:text-[var(--primary)] cursor-pointer"
 				>
-					<Icon size={16}>check_box_outline_blank</Icon>
+					<Icon size={15}>check_box_outline_blank</Icon>
 				</button>
 			)}
 		</li>
@@ -57,9 +57,14 @@ const EventItem: Component<{ event: Event; virtual?: boolean }> = (props) => {
 		>
 			<p>{event().text}</p>
 			<Show when={event().start && event().end}>
-				<p class="text-[var(--secondary)] text-xs font-light">
-					{format(event().start!)} – {format(event().end!)}
-				</p>
+				<div class="flex gap-s items-center">
+					<p class="text-[var(--secondary)] text-xs font-light">
+						{format(event().start!)} – {format(event().end!)}
+					</p>
+					<Show when={virtual()}>
+						<Icon size={15}>repeat</Icon>
+					</Show>
+				</div>
 			</Show>
 		</li>
 	);
