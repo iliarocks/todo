@@ -5,6 +5,7 @@ import { parseItemWithTemplate, parseTemplateWithInstance } from "../lib/types";
 import { generateVirtualItems } from "../lib/repeat";
 import { today } from "../lib/dates";
 import ListItem from "../components/ListItem";
+import Empty from "../components/Empty";
 
 const Upcoming: Component = () => {
 	const auth = db.useAuth();
@@ -38,8 +39,8 @@ const Upcoming: Component = () => {
 	return (
 		<Show when={!state().error}>
 			<Show when={!state().isLoading}>
-				<div class="flex flex-col gap-2xl">
-					<For each={itemsByDate()}>
+				<div class="flex flex-col gap-2xl h-full">
+					<For each={itemsByDate()} fallback={<Empty />}>
 						{([dateKey, itemGroup]) => {
 							const { weekday, monthDay } = formatDate(dateKey);
 

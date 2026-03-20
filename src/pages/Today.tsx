@@ -13,6 +13,7 @@ import { db, queries } from "../lib/db";
 import { Item, Template, parseItemWithTemplate } from "../lib/types";
 import { reorderItem } from "../lib/mutations";
 import ListItem from "../components/ListItem";
+import Empty from "../components/Empty";
 
 declare module "solid-js" {
 	namespace JSX {
@@ -53,7 +54,9 @@ const Today: Component = () => {
 						<DragDropSensors />
 						<ul>
 							<SortableProvider ids={ids()}>
-								<For each={items()}>{(item) => <SortableItem item={item} />}</For>
+								<For each={items()} fallback={<Empty />}>
+									{(item) => <SortableItem item={item} />}
+								</For>
 							</SortableProvider>
 						</ul>
 						<DragOverlay>
