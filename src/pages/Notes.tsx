@@ -5,7 +5,6 @@ import { Item, parseItemWithTemplate, parseTemplate, Template } from "../lib/typ
 import Button from "../components/Button";
 import { marked } from "marked";
 
-
 const Notes: Component = () => {
 	const params = useParams<{ type: string; id: string }>();
 	const location = useLocation();
@@ -38,9 +37,18 @@ const Notes: Component = () => {
 				<div class="flex flex-col gap-m h-full justify-center">
 					<section class="flex justify-between text-[var(--secondary)]">
 						<h1>{data().text}</h1>
-						<Button><A href={`/edit/${params.type}/${params.id}`} state={{ origin: (location.state as any)?.origin }}>Edit</A></Button>
+						<Button>
+							<A
+								href={`/edit/${params.type}/${params.id}`}
+								state={{ origin: (location.state as any)?.origin }}
+							>
+								Edit
+							</A>
+						</Button>
 					</section>
-					<Show when={data().notes}>{(notes) => <div innerHTML={marked.parse(notes()) as string} />}</Show>
+					<Show when={data().notes}>
+						{(notes) => <div innerHTML={marked.parse(notes()) as string} />}
+					</Show>
 				</div>
 			)}
 		</Show>
