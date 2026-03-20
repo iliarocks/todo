@@ -4,21 +4,16 @@ import { db, queries } from "../lib/db";
 import { Item, parseItemWithTemplate, parseTemplate, Template } from "../lib/types";
 import Button from "../components/Button";
 import { marked } from "marked";
+import { useUser } from "../context/auth";
 
 const Notes: Component = () => {
 	const params = useParams<{ type: string; id: string }>();
 	const location = useLocation();
 	const isTemplate = () => params.type === "template";
+	const user = useUser();
 
-	const auth = db.useAuth();
-	const itemQuery = db.useQuery(() => {
-		const user = auth().user;
-		return user ? queries(user.id).itemById(params.id) : null;
-	});
-	const templateQuery = db.useQuery(() => {
-		const user = auth().user;
-		return user ? queries(user.id).templateById(params.id) : null;
-	});
+	const itemQuery = db.useQuery(queries(user.id).itemById(params.id));
+	const templateQuery = db.useQuery(queries(user.id).templateById(params.id) );
 
 	const item = (): Item | Template | undefined => {
 		if (isTemplate()) {

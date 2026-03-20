@@ -10,20 +10,17 @@ import RepeatInputs from "../components/RepeatInputs";
 import { now, today } from "../lib/dates";
 import { Type, MODES, TYPES } from "../lib/types";
 import { useNavigateToList } from "../lib/navigation";
+import { useUser } from "../context/auth";
 
 const Create: Component = () => {
-	const auth = db.useAuth();
+	const user = useUser();
+	const orderState = db.useQuery(queries(user.id).lastOrder);
 	const navigateToList = useNavigateToList();
-	const orderState = db.useQuery(() => {
-		const user = auth().user;
-		return user ? queries(user.id).lastOrder : null;
-	});
 	const [form, setForm] = createStore<CreateParameters>(defaultForm("todo"));
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 
-		const user = auth().user;
 		const lastOrder = orderState().data?.items?.[0]?.order;
 
 		if (user) {

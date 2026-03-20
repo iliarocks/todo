@@ -14,6 +14,7 @@ import { Item, Template, parseItemWithTemplate } from "../lib/types";
 import { reorderItem } from "../lib/mutations";
 import ListItem from "../components/ListItem";
 import Empty from "../components/Empty";
+import { useUser } from "../context/auth";
 
 declare module "solid-js" {
 	namespace JSX {
@@ -24,11 +25,8 @@ declare module "solid-js" {
 }
 
 const Today: Component = () => {
-	const auth = db.useAuth();
-	const state = db.useQuery(() => {
-		const user = auth().user;
-		return user ? queries(user.id).today : null;
-	});
+	const user = useUser();
+	const state = db.useQuery(queries(user.id).today);
 
 	const items = () => (state().data?.items ?? []).map(parseItemWithTemplate);
 	const ids = () => items().map((i) => i.id);

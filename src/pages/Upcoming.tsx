@@ -6,13 +6,11 @@ import { generateVirtualItems } from "../lib/repeat";
 import { today } from "../lib/dates";
 import ListItem from "../components/ListItem";
 import Empty from "../components/Empty";
+import { useUser } from "../context/auth";
 
 const Upcoming: Component = () => {
-	const auth = db.useAuth();
-	const state = db.useQuery(() => {
-		const user = auth().user;
-		return user ? queries(user.id).upcoming : null;
-	});
+	const user = useUser();
+	const state = db.useQuery(queries(user.id).upcoming);
 	const templates = () =>
 		(state().data?.templates ?? []).flatMap((template) => {
 			const parsed = parseTemplateWithInstance(template);

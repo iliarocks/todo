@@ -26,30 +26,22 @@ import {
 import { between } from "../lib/order";
 import { Temporal } from "temporal-polyfill";
 import { useNavigateToList } from "../lib/navigation";
+import { useUser } from "../context/auth";
 
 const Edit: Component = () => {
 	const params = useParams<{ source: string; id: string }>();
 	const navigate = useNavigate();
 	const navigateToList = useNavigateToList();
-	const auth = db.useAuth();
+	const user = useUser();
 
-	const itemQuery = db.useQuery(() => {
-		const user = auth().user;
-		return user ? queries(user.id).itemById(params.id) : null;
-	});
-	const templateQuery = db.useQuery(() => {
-		const user = auth().user;
-		return user ? queries(user.id).templateById(params.id) : null;
-	});
-	const orderState = db.useQuery(() => {
-		const user = auth().user;
-		return user ? queries(user.id).lastOrder : null;
-	});
+	const itemQuery = db.useQuery(queries(user.id).itemById(params.id));
+	const templateQuery = db.useQuery(queries(user.id).templateById(params.id));
+	const orderState = db.useQuery(queries(user.id).lastOrder);
 
 	const loaded = () => {
 		if (params.source === "template") {
 			const raw = templateQuery().data?.templates?.[0];
-			return raw ? parseTemplateWithInstance(raw) ?? undefined : undefined;
+			return raw ? (parseTemplateWithInstance(raw) ?? undefined) : undefined;
 		}
 		const raw = itemQuery().data?.items?.[0];
 		return raw ? parseItemWithTemplate(raw) : undefined;
@@ -75,9 +67,10 @@ const Edit: Component = () => {
 						const item = data() as Item & { template?: Template };
 						const wasFuture = Temporal.PlainDate.compare(item.date, today()) > 0;
 						const isNow = Temporal.PlainDate.compare(form.date, today()) <= 0;
-						const order = wasFuture && isNow
-							? between(orderState().data?.items?.[0]?.order, undefined)
-							: undefined;
+						const order =
+							wasFuture && isNow
+								? between(orderState().data?.items?.[0]?.order, undefined)
+								: undefined;
 						updateItem(item.id, form, item.template?.id, order);
 					}
 
@@ -88,10 +81,7 @@ const Edit: Component = () => {
 					if (isTemplate) {
 						deleteTemplate((data() as Template).id);
 					} else {
-						const user = auth().user;
-						if (user) {
-							deleteItem(data() as Item & { template?: Template }, user);
-						}
+						deleteItem(data() as Item & { template?: Template }, user);
 					}
 
 					navigateToList();

@@ -8,6 +8,7 @@ import { parseItemWithTemplate } from "./lib/types";
 import { now, today } from "./lib/dates";
 import Login from "./pages/Login";
 import Footer from "./components/Footer";
+import { AuthProvider } from "./context/auth";
 
 const Layout: ParentComponent = (props) => {
 	onMount(() => inject());
@@ -41,12 +42,16 @@ const Layout: ParentComponent = (props) => {
 		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
 			<Show when={!auth().isLoading}>
 				<Show when={auth().user} fallback={<Login />}>
-					<div class="flex flex-col h-full w-full">
-						<main class={`grow overflow-y-scroll py-m ${isListPage() ? "px-s" : "px-m"}`}>
-							{props.children}
-						</main>
-						<Footer />
-					</div>
+					{(user) => (
+						<AuthProvider user={user()}>
+							<div class="flex flex-col h-full w-full">
+								<main class={`grow overflow-y-scroll py-m ${isListPage() ? "px-s" : "px-m"}`}>
+									{props.children}
+								</main>
+								<Footer />
+							</div>
+						</AuthProvider>
+					)}
 				</Show>
 			</Show>
 		</div>
