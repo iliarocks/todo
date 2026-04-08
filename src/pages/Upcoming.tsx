@@ -1,28 +1,18 @@
 import { Temporal } from "temporal-polyfill";
-import { Component, For, Show } from "solid-js";
-import { db, queries } from "../lib/db";
-import { parseItemWithTemplate, parseTemplateWithInstance } from "../lib/types";
-import { generateVirtualItems } from "../lib/repeat";
-import { today } from "../lib/dates";
+import { Component, For } from "solid-js";
+import { generateVirtualItems } from "../library/repeat";
+import { compareDate, today } from "../library/date";
 import ListItem from "../components/ListItem";
 import Empty from "../components/Empty";
-import { useUser } from "../context/auth";
+import { useData } from "../context/data";
 
 const Upcoming: Component = () => {
-	const user = useUser();
-	const state = db.useQuery(queries(user.id).upcoming);
-	const templates = () =>
-		(state().data?.templates ?? []).flatMap((template) => {
-			const parsed = parseTemplateWithInstance(template);
-			return parsed ? [parsed] : [];
-		});
-	const templateIds = () => new Set(templates().map((template) => template.id));
+	const data = useData();
+	const templates = () => data.templates();
+	const templateIds = () => new Set(templates().map((t) => t.id));
 	const items = () => {
-		const real = (state().data?.items ?? []).map(parseItemWithTemplate);
-		const virtual = templates().flatMap((template) => {
-			return generateVirtualItems(template, template.instance.date, today().add({ weeks: 2 }));
-		});
-
+		const real = data.items().filter((i) => compareDate(i.date, today()) > 0);
+		const virtual = templates().flatMap((t) => generateVirtualItems(t, t.instance.date, today().add({ weeks: 2 })));
 		return [...real, ...virtual].sort((a, b) => Temporal.PlainDate.compare(a.date, b.date));
 	};
 	const itemsByDate = () => Object.entries(Object.groupBy(items(), ({ date }) => date.toString()));
@@ -35,31 +25,27 @@ const Upcoming: Component = () => {
 	};
 
 	return (
-		<Show when={!state().error}>
-			<Show when={!state().isLoading}>
-				<div class="flex flex-col gap-2xl h-full">
-					<For each={itemsByDate()} fallback={<Empty />}>
-						{([dateKey, itemGroup]) => {
-							const { weekday, monthDay } = formatDate(dateKey);
+		<div class="flex flex-col gap-2xl h-full">
+			<For each={itemsByDate()} fallback={<Empty />}>
+				{([dateKey, itemGroup]) => {
+					const { weekday, monthDay } = formatDate(dateKey);
 
-							return (
-								<section class="flex flex-col gap-s">
-									<header class="flex justify-between px-xs text-[var(--secondary)]">
-										<h2 class="">{weekday}</h2>
-										<h2 class="font-light text-xs">{monthDay}</h2>
-									</header>
-									<ul>
-										<For each={itemGroup}>
-											{(item) => <ListItem item={item} virtual={templateIds().has(item.id)} />}
-										</For>
-									</ul>
-								</section>
-							);
-						}}
-					</For>
-				</div>
-			</Show>
-		</Show>
+					return (
+						<section class="flex flex-col gap-s">
+							<header class="flex justify-between px-xs text-[var(--secondary)]">
+								<h2 class="">{weekday}</h2>
+								<h2 class="font-light text-xs">{monthDay}</h2>
+							</header>
+							<ul>
+								<For each={itemGroup}>
+									{(item) => <ListItem item={item} virtual={templateIds().has(item.id)} />}
+								</For>
+							</ul>
+						</section>
+					);
+				}}
+			</For>
+		</div>
 	);
 };
 

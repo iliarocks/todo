@@ -1,29 +1,19 @@
 import { A, useLocation, useParams } from "@solidjs/router";
 import { type Component, Show } from "solid-js";
-import { db, queries } from "../lib/db";
-import { Item, parseItemWithTemplate, parseTemplate, Template } from "../lib/types";
+import { Item, Template } from "../library/types";
 import Button from "../components/Button";
 import { marked } from "marked";
-import { useUser } from "../context/auth";
+import { useData } from "../context/data";
 
 const Notes: Component = () => {
 	const params = useParams<{ type: string; id: string }>();
 	const location = useLocation();
 	const isTemplate = () => params.type === "template";
-	const user = useUser();
-
-	const itemQuery = db.useQuery(queries(user.id).itemById(params.id));
-	const templateQuery = db.useQuery(queries(user.id).templateById(params.id) );
+	const data = useData();
 
 	const item = (): Item | Template | undefined => {
-		if (isTemplate()) {
-			const raw = templateQuery().data?.templates?.[0];
-			if (!raw) return undefined;
-			return parseTemplate(raw);
-		}
-		const raw = itemQuery().data?.items?.[0];
-		if (!raw) return undefined;
-		return parseItemWithTemplate(raw);
+		if (isTemplate()) return data.templates().find((t) => t.id === params.id);
+		return data.items().find((i) => i.id === params.id);
 	};
 
 	return (

@@ -1,5 +1,5 @@
 import { type Component, createSignal, Match, Switch } from "solid-js";
-import { db } from "../lib/db";
+import { db } from "../library/db";
 import Input from "../components/Input";
 import Button from "../components/Button";
 

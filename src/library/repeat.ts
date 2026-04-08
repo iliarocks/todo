@@ -1,6 +1,6 @@
 import { Item, Repeat, Template } from "./types";
 import { Temporal } from "temporal-polyfill";
-import { advanceDate } from "./dates";
+import { advanceDate } from "./date";
 
 const nextCycleDate = (
 	date: Temporal.PlainDate,

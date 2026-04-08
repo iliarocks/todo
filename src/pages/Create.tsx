@@ -3,25 +3,25 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import { createStore } from "solid-js/store";
 import ToggleSelect from "../components/ToggleSelect";
-import { createItem, CreateParameters } from "../lib/mutations";
-import { db, queries } from "../lib/db";
+import { createItem, CreateParameters } from "../library/mutations";
 import DateTimeInputs from "../components/DateTimeInputs";
 import RepeatInputs from "../components/RepeatInputs";
-import { now, today } from "../lib/dates";
-import { Type, MODES, TYPES } from "../lib/types";
-import { useNavigateToList } from "../lib/navigation";
+import { now, today } from "../library/date";
+import { Type, MODES, TYPES } from "../library/types";
+import { useNavigateToList } from "../library/navigation";
 import { useUser } from "../context/auth";
+import { useData } from "../context/data";
 
 const Create: Component = () => {
 	const user = useUser();
-	const orderState = db.useQuery(queries(user.id).lastOrder);
+	const data = useData();
 	const navigateToList = useNavigateToList();
 	const [form, setForm] = createStore<CreateParameters>(defaultForm("todo"));
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 
-		const lastOrder = orderState().data?.items?.[0]?.order;
+		const lastOrder = data.items().at(-1)?.order;
 
 		if (user) {
 			createItem(form, user, lastOrder);

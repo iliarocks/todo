@@ -1,6 +1,6 @@
 import { A } from "@solidjs/router";
 import { Component } from "solid-js";
-import { db } from "../lib/db";
+import { db } from "../library/db";
 import Button from "../components/Button";
 
 const Navigation: Component = () => {

@@ -1,23 +1,23 @@
 import { Temporal } from "temporal-polyfill";
 import { Component, Show } from "solid-js";
-import { db } from "../lib/db";
-import { Item, Todo, Event, Template } from "../lib/types";
-import { deleteItem } from "../lib/mutations";
+import { Item, Template } from "../library/types";
+import { deleteItem } from "../library/mutations";
 import Icon from "./Icon";
-import { useNavigateFromList } from "../lib/navigation";
+import { useNavigateFromList } from "../library/navigation";
+import { useUser } from "../context/auth";
 
 const format = (t: Temporal.PlainTime) =>
 	t.round({ smallestUnit: "minute" }).toString().slice(0, 5);
 
-const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: boolean }> = (
+const TodoItem: Component<{ todo: Item & { template?: Template }; virtual?: boolean }> = (
 	props,
 ) => {
-	const auth = db.useAuth();
+	const user = useUser();
 	const navigateFromList = useNavigateFromList();
 	const todo = () => props.todo;
 	const virtual = () => props.virtual ?? false;
 
-	const onComplete = () => deleteItem(todo(), auth().user!);
+	const onComplete = () => deleteItem(todo(), user);
 
 	return (
 		<li
@@ -43,7 +43,7 @@ const TodoItem: Component<{ todo: Todo & { template?: Template }; virtual?: bool
 	);
 };
 
-const EventItem: Component<{ event: Event; virtual?: boolean }> = (props) => {
+const EventItem: Component<{ event: Item; virtual?: boolean }> = (props) => {
 	const navigateFromList = useNavigateFromList();
 	const event = () => props.event;
 	const virtual = () => props.virtual ?? false;

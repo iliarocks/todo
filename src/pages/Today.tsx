@@ -1,4 +1,4 @@
-import { type Component, For, Show } from "solid-js";
+import { type Component, For } from "solid-js";
 import {
 	DragDropProvider,
 	DragDropSensors,
@@ -9,12 +9,13 @@ import {
 	createSortable,
 	useDragDropContext,
 } from "@thisbeyond/solid-dnd";
-import { db, queries } from "../lib/db";
-import { Item, Template, parseItemWithTemplate } from "../lib/types";
-import { reorderItem } from "../lib/mutations";
+import { Item, Template } from "../library/types";
 import ListItem from "../components/ListItem";
 import Empty from "../components/Empty";
-import { useUser } from "../context/auth";
+import { useData } from "../context/data";
+import { compareDate, today } from "../library/date";
+import { updateItem } from "../library/db";
+import { between } from "../library/order";
 
 declare module "solid-js" {
 	namespace JSX {
@@ -25,10 +26,8 @@ declare module "solid-js" {
 }
 
 const Today: Component = () => {
-	const user = useUser();
-	const state = db.useQuery(queries(user.id).today);
-
-	const items = () => (state().data?.items ?? []).map(parseItemWithTemplate);
+	const data = useData();
+	const items = () => data.items().filter((item) => compareDate(item.date, today()) === 0);
 	const ids = () => items().map((i) => i.id);
 
 	const onDragEnd = ({ draggable, droppable }: DragEvent) => {
@@ -41,31 +40,27 @@ const Today: Component = () => {
 		const before = (from < to ? current[to] : current[to - 1])?.order;
 		const after = (from > to ? current[to] : current[to + 1])?.order;
 
-		reorderItem(String(draggable.id), before, after);
+		updateItem(current[from], { order: between(before, after) });
 	};
 
 	return (
 		<div class="flex flex-col h-full justify-center">
-			<Show when={!state().error}>
-				<Show when={!state().isLoading}>
-					<DragDropProvider onDragEnd={onDragEnd} collisionDetector={closestCenter}>
-						<DragDropSensors />
-						<ul>
-							<SortableProvider ids={ids()}>
-								<For each={items()} fallback={<Empty />}>
-									{(item) => <SortableItem item={item} />}
-								</For>
-							</SortableProvider>
-						</ul>
-						<DragOverlay>
-							{(draggable) => {
-								const item = items().find((i) => i.id === draggable?.id);
-								return item ? <OverlayItem item={item} /> : null;
-							}}
-						</DragOverlay>
-					</DragDropProvider>
-				</Show>
-			</Show>
+			<DragDropProvider onDragEnd={onDragEnd} collisionDetector={closestCenter}>
+				<DragDropSensors />
+				<ul>
+					<SortableProvider ids={ids()}>
+						<For each={items()} fallback={<Empty />}>
+							{(item) => <SortableItem item={item} />}
+						</For>
+					</SortableProvider>
+				</ul>
+				<DragOverlay>
+					{(draggable) => {
+						const item = items().find((i) => i.id === draggable?.id);
+						return item ? <OverlayItem item={item} /> : null;
+					}}
+				</DragOverlay>
+			</DragDropProvider>
 		</div>
 	);
 };

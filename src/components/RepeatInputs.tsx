@@ -1,7 +1,7 @@
 import { Component, Show } from "solid-js";
 import Input from "./Input";
 import ToggleSelect from "./ToggleSelect";
-import { Mode, Unit, UNITS } from "../lib/types";
+import { Mode, Unit, UNITS } from "../library/types";
 
 const WEEK_DAYS = ["m", "t", "w", "t", "f", "s", "s"] as const;
 const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));

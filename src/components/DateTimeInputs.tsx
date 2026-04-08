@@ -1,7 +1,7 @@
 import { Component, Show } from "solid-js";
 import { Temporal } from "temporal-polyfill";
 import Input from "./Input";
-import { parseDate, parseTime, today } from "../lib/dates";
+import { parseDate, parseTime, today } from "../library/date";
 
 const DateTimeInputs: Component<{
 	date: Temporal.PlainDate;

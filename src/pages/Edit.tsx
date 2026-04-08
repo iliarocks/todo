@@ -1,17 +1,8 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import { type Component, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import { db, queries } from "../lib/db";
-import {
-	parseItemWithTemplate,
-	parseTemplateWithInstance,
-	Item,
-	Template,
-	Event,
-	EventTemplate,
-	MODES,
-} from "../lib/types";
-import { today } from "../lib/dates";
+import { Item, Template, MODES } from "../library/types";
+import { today } from "../library/date";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import DateTimeInputs from "../components/DateTimeInputs";
@@ -22,30 +13,26 @@ import {
 	updateTemplate,
 	deleteItem,
 	deleteTemplate,
-} from "../lib/mutations";
-import { between } from "../lib/order";
+} from "../library/mutations";
+import { between } from "../library/order";
 import { Temporal } from "temporal-polyfill";
-import { useNavigateToList } from "../lib/navigation";
+import { useNavigateToList } from "../library/navigation";
+import { useData } from "../context/data";
 import { useUser } from "../context/auth";
 
 const Edit: Component = () => {
 	const params = useParams<{ source: string; id: string }>();
 	const navigate = useNavigate();
 	const navigateToList = useNavigateToList();
+	const data = useData();
 	const user = useUser();
 
-	const itemQuery = db.useQuery(queries(user.id).itemById(params.id));
-	const templateQuery = db.useQuery(queries(user.id).templateById(params.id));
-	const orderState = db.useQuery(queries(user.id).lastOrder);
-
 	const loaded = () => {
-		if (params.source === "template") {
-			const raw = templateQuery().data?.templates?.[0];
-			return raw ? (parseTemplateWithInstance(raw) ?? undefined) : undefined;
-		}
-		const raw = itemQuery().data?.items?.[0];
-		return raw ? parseItemWithTemplate(raw) : undefined;
+		if (params.source === "template") return data.templates().find((t) => t.id === params.id);
+		return data.items().find((i) => i.id === params.id);
 	};
+
+	const lastOrder = () => data.items().at(-1)?.order;
 
 	return (
 		<Show when={loaded()}>
@@ -69,7 +56,7 @@ const Edit: Component = () => {
 						const isNow = Temporal.PlainDate.compare(form.date, today()) <= 0;
 						const order =
 							wasFuture && isNow
-								? between(orderState().data?.items?.[0]?.order, undefined)
+								? between(lastOrder(), undefined)
 								: undefined;
 						updateItem(item.id, form, item.template?.id, order);
 					}
@@ -153,8 +140,8 @@ const initializeItem = (data: Item & { template?: Template }): CreateParameters 
 		text: data.text,
 		notes: data.notes,
 		date: data.date,
-		start: data.type === "event" ? (data as Event).start : undefined,
-		end: data.type === "event" ? (data as Event).end : undefined,
+		start: data.type === "event" ? data.start : undefined,
+		end: data.type === "event" ? data.end : undefined,
 		mode: tpl?.mode,
 		interval: tpl?.interval,
 		unit: tpl?.unit,
@@ -169,8 +156,8 @@ const initializeTemplate = (data: Template & { instance: Item }): CreateParamete
 		text: data.text,
 		notes: data.notes,
 		date: data.instance.date,
-		start: isEvent ? (data as EventTemplate).start : undefined,
-		end: isEvent ? (data as EventTemplate).end : undefined,
+		start: isEvent ? data.start : undefined,
+		end: isEvent ? data.end : undefined,
 		mode: data.mode,
 		interval: data.interval,
 		unit: data.unit,

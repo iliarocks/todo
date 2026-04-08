@@ -1,54 +1,33 @@
-import { useLocation } from "@solidjs/router";
-import { ParentComponent, Show, createEffect, on, onMount } from "solid-js";
 import { inject } from "@vercel/analytics";
-import { Temporal } from "temporal-polyfill";
-import { db, queries } from "./lib/db";
-import { deleteItem } from "./lib/mutations";
-import { parseItemWithTemplate } from "./lib/types";
-import { now, today } from "./lib/dates";
+import { onMount, ParentComponent, Show } from "solid-js";
+import { db } from "./library/db";
+import { AuthProvider } from "./context/auth";
+import { DataProvider } from "./context/data";
 import Login from "./pages/Login";
 import Footer from "./components/Footer";
-import { AuthProvider } from "./context/auth";
 import { Transition } from "solid-transition-group";
 
 const Layout: ParentComponent = (props) => {
 	onMount(() => inject());
+
 	const auth = db.useAuth();
 
-	const state = db.useQuery(() => {
-		const user = auth().user;
-		return user ? queries(user.id).expiring : null;
-	});
-	const items = () => (state().data?.items ?? []).map(parseItemWithTemplate);
-
-	createEffect(
-		on(items, (is) => {
-			const user = auth().user;
-			if (user) {
-				const events = is.filter((i) => i.type === "event");
-				const expired = events.filter(
-					(e) =>
-						Temporal.PlainDate.compare(e.date, today()) < 0 ||
-						(Temporal.PlainDate.compare(e.date, today()) === 0 &&
-							Temporal.PlainTime.compare(e.end ?? now(), now()) < 0),
-				);
-				for (const e of expired) deleteItem(e, user);
-			}
-		}),
-	);
-
 	return (
-		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
+		<div class="h-dvh w-dvh md:w-[600px] md:m-auto">
 			<Show when={!auth().isLoading}>
 				<Show when={auth().user} fallback={<Login />}>
 					{(user) => (
 						<AuthProvider user={user()}>
-							<div class="flex flex-col h-full w-full">
-								<main class={`grow overflow-y-scroll py-m px-s`}>
-									<Transition name="page" mode="outin">{props.children}</Transition>
-								</main>
-								<Footer />
-							</div>
+							<DataProvider>
+								<div class="flex flex-col h-full w-full py-m px-s gap-m">
+									<main class="grow overflow-y-scroll">
+										<Transition name="page" mode="outin">
+											{props.children}
+										</Transition>
+									</main>
+									<Footer />
+								</div>
+							</DataProvider>
 						</AuthProvider>
 					)}
 				</Show>

@@ -1,5 +1,5 @@
 import { useLocation } from "@solidjs/router";
-import { useNavigateFromList, useNavigateToList } from "../lib/navigation";
+import { useNavigateFromList, useNavigateToList } from "../library/navigation";
 import Button from "./Button";
 import Icon from "./Icon";
 import { Show } from "solid-js";
@@ -16,7 +16,7 @@ const Footer = () => {
 		location.pathname.startsWith("/notes/");
 
 	return (
-		<div class="flex justify-center gap-l p-s">
+		<div class="flex justify-center gap-l">
 			<Transition name="footer" mode="outin">
 				<Show
 					when={showClose()}

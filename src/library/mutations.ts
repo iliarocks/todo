@@ -137,8 +137,3 @@ export const deleteItem = (item: Item & { template?: Template }, user: { id: str
 export const deleteTemplate = (templateId: string) => {
 	db.transact([db.tx.templates[templateId].delete()]);
 };
-
-export const reorderItem = (itemId: string , before: string | undefined, after: string | undefined) => {
-	db.transact([db.tx.items[itemId].update({ order: between(before, after) })]);
-};
-
