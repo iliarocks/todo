@@ -6,6 +6,7 @@ import { DataProvider } from "./context/data";
 import Login from "./pages/Login";
 import Footer from "./components/Footer";
 import { Transition } from "solid-transition-group";
+import Cleanup from "./components/Cleanup";
 
 const Layout: ParentComponent = (props) => {
 	onMount(() => inject());
@@ -27,6 +28,7 @@ const Layout: ParentComponent = (props) => {
 									</main>
 									<Footer />
 								</div>
+								<Cleanup />
 							</DataProvider>
 						</AuthProvider>
 					)}

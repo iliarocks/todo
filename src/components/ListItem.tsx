@@ -1,10 +1,10 @@
 import { Temporal } from "temporal-polyfill";
 import { Component, Show } from "solid-js";
 import { Item, Template } from "../library/types";
-import { deleteItem } from "../library/mutations";
 import Icon from "./Icon";
 import { useNavigateFromList } from "../library/navigation";
 import { useUser } from "../context/auth";
+import { deleteItem } from "../library/db";
 
 const format = (t: Temporal.PlainTime) =>
 	t.round({ smallestUnit: "minute" }).toString().slice(0, 5);

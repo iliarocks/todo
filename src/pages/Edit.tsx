@@ -11,7 +11,6 @@ import {
 	CreateParameters,
 	updateItem,
 	updateTemplate,
-	deleteItem,
 	deleteTemplate,
 } from "../library/mutations";
 import { between } from "../library/order";
@@ -19,6 +18,7 @@ import { Temporal } from "temporal-polyfill";
 import { useNavigateToList } from "../library/navigation";
 import { useData } from "../context/data";
 import { useUser } from "../context/auth";
+import { deleteItem } from "../library/db";
 
 const Edit: Component = () => {
 	const params = useParams<{ source: string; id: string }>();

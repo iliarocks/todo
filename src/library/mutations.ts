@@ -1,8 +1,7 @@
 import { id } from "@instantdb/solidjs";
 import { Temporal } from "temporal-polyfill";
 import { db } from "./db";
-import { Item, Mode, Unit, Type, Template, EventTemplate } from "./types";
-import { nextDate } from "./repeat";
+import { Mode, Unit, Type } from "./types";
 import { between } from "./order";
 
 export type CreateParameters = {
@@ -107,30 +106,6 @@ export const updateTemplate = (templateId: string, instanceId: string, params: C
 			reference: mode === "absolute" ? date.toString() : undefined,
 		}),
 		db.tx.items[instanceId].update(instanceUpdate),
-	]);
-};
-
-export const deleteItem = (item: Item & { template?: Template }, user: { id: string }) => {
-	if (item.template === undefined) {
-		db.transact([db.tx.items[item.id].delete()]);
-		return;
-	}
-
-	const template = item.template;
-	const date = nextDate(item.date, template);
-	db.transact([
-		db.tx.items[id()]
-			.create({
-				type: template.type,
-				text: template.text,
-				date: date.toString(),
-				start: template.type === "event" ? (template as EventTemplate).start?.toString() : undefined,
-				end: template.type === "event" ? (template as EventTemplate).end?.toString() : undefined,
-				notes: template.notes,
-				order: item.order,
-			})
-			.link({ user: user.id, template: template.id }),
-		db.tx.items[item.id].delete(),
 	]);
 };
 
