@@ -1,22 +1,20 @@
-import { type Component } from "solid-js";
+import { Show, type Component } from "solid-js";
 import Button from "../components/Button";
-import Input from "../components/Input";
 import { createStore } from "solid-js/store";
-import ToggleSelect from "../components/ToggleSelect";
-import { createItem, CreateParameters } from "../library/mutations";
-import DateTimeInputs from "../components/DateTimeInputs";
-import RepeatInputs from "../components/RepeatInputs";
+import { createItem } from "../library/mutations";
 import { now, today } from "../library/date";
-import { Type, MODES, TYPES } from "../library/types";
+import { Type, MODES, TYPES, Mode, Unit } from "../library/types";
 import { useNavigateToList } from "../library/navigation";
 import { useUser } from "../context/auth";
 import { useData } from "../context/data";
+import { DateInput, Input, RepeatInputs, TextArea, TimeInput, ToggleSelect } from "../components/Form";
+import { Temporal } from "temporal-polyfill";
 
 const Create: Component = () => {
 	const user = useUser();
 	const data = useData();
 	const navigateToList = useNavigateToList();
-	const [form, setForm] = createStore<CreateParameters>(defaultForm("todo"));
+	const [form, setForm] = createStore(buildForm({ type: "todo", date: today() }));
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
@@ -29,7 +27,7 @@ const Create: Component = () => {
 		}
 	};
 
-	const resetForm = (type: Type) => setForm(defaultForm(type, form.text, form.notes));
+	const resetForm = (type: Type) => setForm(buildForm({ type, date: form.date, text: form.text, notes: form.notes }));
 
 	return (
 		<form onSubmit={handleSubmit} class="flex flex-col gap-s">
@@ -50,23 +48,20 @@ const Create: Component = () => {
 				onInput={(e) => setForm({ text: e.currentTarget.value })}
 				required
 			/>
-			<Input
+			<TextArea
 				placeholder="Notes"
 				value={form.notes ?? ""}
 				onInput={(e) => setForm({ notes: e.currentTarget.value || undefined })}
-				multiline
 			/>
 			<section class="flex flex-col gap-xs">
 				<p class="text-xs text-[var(--secondary)]">WHEN</p>
-				<DateTimeInputs
-					date={form.date}
-					start={form.start}
-					end={form.end}
-					setDate={(date) => setForm({ date })}
-					setStart={(start) => setForm({ start })}
-					setEnd={(end) => setForm({ end })}
-					time={form.type === "event"}
-				/>
+				<div class="flex gap-xs">
+					<DateInput date={form.date} setDate={(date) => setForm({ date })} />
+					<Show when={form.type === "event"}>
+						<TimeInput time={form.start} setTime={(start) => setForm({ start })} />
+						<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
+					</Show>
+				</div>
 			</section>
 			<section class="flex flex-col gap-xs">
 				<p class="text-xs text-[var(--secondary)]">REPEAT</p>
@@ -86,17 +81,22 @@ const Create: Component = () => {
 	);
 };
 
-const defaultForm = (type: Type, text?: string, notes?: string) => ({
-	type,
-	text: text ?? "",
-	notes: notes ?? undefined,
-	date: today(),
-	start: type === "todo" ? undefined : now(),
-	end: type === "todo" ? undefined : now(),
-	mode: undefined,
-	interval: undefined,
-	unit: undefined,
-	anchor: undefined,
+const buildForm = (props: {
+	type: Type;
+	date: Temporal.PlainDate;
+	text?: string;
+	notes?: string;
+}) => ({
+	type: props.type,
+	text: props.text ?? "",
+	notes: props.notes ?? undefined,
+	date: props.date,
+	start: props.type === "todo" ? undefined : now(),
+	end: props.type === "todo" ? undefined : now(),
+	mode: undefined as Mode | undefined,
+	interval: undefined as number | undefined,
+	unit: undefined as Unit | undefined,
+	anchor: undefined as number[] | undefined,
 });
 
 export default Create;

@@ -4,21 +4,14 @@ import { createStore } from "solid-js/store";
 import { Item, Template, MODES } from "../library/types";
 import { today } from "../library/date";
 import Button from "../components/Button";
-import Input from "../components/Input";
-import DateTimeInputs from "../components/DateTimeInputs";
-import RepeatInputs from "../components/RepeatInputs";
-import {
-	CreateParameters,
-	updateItem,
-	updateTemplate,
-	deleteTemplate,
-} from "../library/mutations";
+import { CreateParameters, updateItem, updateTemplate, deleteTemplate } from "../library/mutations";
 import { between } from "../library/order";
 import { Temporal } from "temporal-polyfill";
 import { useNavigateToList } from "../library/navigation";
 import { useData } from "../context/data";
 import { useUser } from "../context/auth";
 import { deleteItem } from "../library/db";
+import { DateInput, Input, RepeatInputs, TextArea, TimeInput } from "../components/Form";
 
 const Edit: Component = () => {
 	const params = useParams<{ source: string; id: string }>();
@@ -54,10 +47,7 @@ const Edit: Component = () => {
 						const item = data() as Item & { template?: Template };
 						const wasFuture = Temporal.PlainDate.compare(item.date, today()) > 0;
 						const isNow = Temporal.PlainDate.compare(form.date, today()) <= 0;
-						const order =
-							wasFuture && isNow
-								? between(lastOrder(), undefined)
-								: undefined;
+						const order = wasFuture && isNow ? between(lastOrder(), undefined) : undefined;
 						updateItem(item.id, form, item.template?.id, order);
 					}
 
@@ -90,24 +80,21 @@ const Edit: Component = () => {
 							required
 							autofocus
 						/>
-						<Input
+						<TextArea
 							placeholder="Notes"
 							value={form.notes ?? ""}
 							onInput={(e) => setForm({ notes: e.currentTarget.value || undefined })}
-							multiline
 						/>
 						<Show when={!isTemplate}>
 							<section class="flex flex-col gap-xs">
 								<p class="text-xs text-[var(--secondary)]">WHEN</p>
-								<DateTimeInputs
-									date={form.date}
-									start={form.start}
-									end={form.end}
-									setDate={(date) => setForm({ date })}
-									setStart={(start) => setForm({ start })}
-									setEnd={(end) => setForm({ end })}
-									time={form.type === "event"}
-								/>
+								<div class="flex gap-xs">
+									<DateInput date={form.date} setDate={(date) => setForm({ date })} />
+									<Show when={form.type === "event"}>
+										<TimeInput time={form.start} setTime={(start) => setForm({ start })} />
+										<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
+									</Show>
+								</div>
 							</section>
 						</Show>
 						<Show when={isTemplate}>

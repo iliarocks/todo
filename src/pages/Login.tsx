@@ -1,7 +1,7 @@
 import { type Component, createSignal, Match, Switch } from "solid-js";
 import { db } from "../library/db";
-import Input from "../components/Input";
 import Button from "../components/Button";
+import { Input } from "../components/Form";
 
 const Login: Component = () => {
 	const [step, setStep] = createSignal<"email" | "code">("email");
