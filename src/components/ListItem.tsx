@@ -2,7 +2,7 @@ import { Temporal } from "temporal-polyfill";
 import { Component, Show } from "solid-js";
 import { Item, Template } from "../library/types";
 import Icon from "./Icon";
-import { useNavigateFromList } from "../library/navigation";
+import { useNavigation } from "../library/navigation";
 import { deleteItem } from "../library/db";
 
 const format = (t: Temporal.PlainTime) =>
@@ -11,7 +11,7 @@ const format = (t: Temporal.PlainTime) =>
 const TodoItem: Component<{ todo: Item & { template?: Template }; virtual?: boolean }> = (
 	props,
 ) => {
-	const navigateFromList = useNavigateFromList();
+	const navigation = useNavigation();
 	const todo = () => props.todo;
 	const virtual = () => props.virtual ?? false;
 
@@ -19,7 +19,7 @@ const TodoItem: Component<{ todo: Item & { template?: Template }; virtual?: bool
 
 	return (
 		<li
-			onClick={() => navigateFromList(`/notes/${virtual() ? "template" : "instance"}/${todo().id}`)}
+			onClick={() => navigation.push(`/notes/${todo().id}`)}
 			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
 		>
 			<p>{todo().text}</p>
@@ -42,15 +42,13 @@ const TodoItem: Component<{ todo: Item & { template?: Template }; virtual?: bool
 };
 
 const EventItem: Component<{ event: Item; virtual?: boolean }> = (props) => {
-	const navigateFromList = useNavigateFromList();
+	const navigation = useNavigation();
 	const event = () => props.event;
 	const virtual = () => props.virtual ?? false;
 
 	return (
 		<li
-			onClick={() =>
-				navigateFromList(`/notes/${virtual() ? "template" : "instance"}/${event().id}`)
-			}
+			onClick={() => navigation.push(`/notes/${event().id}`)}
 			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
 		>
 			<p>{event().text}</p>

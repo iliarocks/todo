@@ -1,13 +1,13 @@
 import { useLocation, useNavigate } from "@solidjs/router";
 
-export const useNavigateFromList = () => {
+export const useNavigation = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
-	return (path: string) => navigate(path, { state: { origin: location.pathname } });
-};
+	const origin = () => (location.state as any)?.origin ?? "/upcoming";
 
-export const useNavigateToList = () => {
-	const location = useLocation();
-	const navigate = useNavigate();
-	return () => navigate((location.state as any)?.origin ?? "/upcoming", { replace: true });
+	return {
+		push: (path: string) => navigate(path, { state: { origin: location.pathname } }),
+		replace: (path: string) => navigate(path, { replace: true, state: { origin: origin() } }),
+		back: () => navigate(origin(), { replace: true }),
+	};
 };

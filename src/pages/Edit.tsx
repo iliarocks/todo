@@ -4,6 +4,7 @@ import { Item, MODES, Template } from "../library/types";
 import { useData } from "../context/data";
 import { createStore } from "solid-js/store";
 import { deleteItem, deleteTemplate, updateItem, updateTemplate } from "../library/db";
+import { useNavigation } from "../library/navigation";
 import { DateInput, Input, RepeatInputs, TextArea, TimeInput } from "../components/Form";
 import Button from "../components/Button";
 
@@ -22,6 +23,7 @@ const Edit: Component = () => {
 };
 
 const EditTemplate: Component<{ template: Template & { instance: Item } }> = (props) => {
+	const navigation = useNavigation();
 	const template = () => props.template;
 	const [form, setForm] = createStore({
 		text: template().text,
@@ -47,10 +49,13 @@ const EditTemplate: Component<{ template: Template & { instance: Item } }> = (pr
 			interval: form.interval,
 			anchor: form.anchor,
 		});
-		// add navigation back to notes
+		navigation.back();
 	};
 
-	const handleDelete = () => deleteTemplate(template());
+	const handleDelete = () => {
+		deleteTemplate(template());
+		navigation.back();
+	};
 
 	return (
 		<form onSubmit={handleSubmit} class="flex flex-col gap-m">
@@ -97,6 +102,7 @@ const EditTemplate: Component<{ template: Template & { instance: Item } }> = (pr
 };
 
 const EditItem: Component<{ item: Item & { template?: Template } }> = (props) => {
+	const navigation = useNavigation();
 	const item = () => props.item;
 	const [form, setForm] = createStore({
 		text: item().text,
@@ -116,10 +122,13 @@ const EditItem: Component<{ item: Item & { template?: Template } }> = (props) =>
 			start: form.start,
 			end: form.end,
 		});
-		// add navigation back to notes
+		navigation.back();
 	};
 
-	const handleDelete = () => deleteItem(item());
+	const handleDelete = () => {
+		deleteItem(item());
+		navigation.back();
+	};
 
 	return (
 		<form onSubmit={handleSubmit} class="flex flex-col gap-m">

@@ -3,7 +3,7 @@ import Button from "../components/Button";
 import { createStore } from "solid-js/store";
 import { now, today } from "../library/date";
 import { Type, MODES, TYPES, Mode, Unit, Item } from "../library/types";
-import { useNavigateToList } from "../library/navigation";
+import { useNavigation } from "../library/navigation";
 import { useUser } from "../context/auth";
 import { useData } from "../context/data";
 import {
@@ -20,7 +20,7 @@ import { createItem } from "../library/db";
 const Create: Component = () => {
 	const user = useUser();
 	const data = useData();
-	const navigateToList = useNavigateToList();
+	const navigation = useNavigation();
 	const [form, setForm] = createStore(
 		buildForm({ type: "todo", date: today() }),
 	);
@@ -37,7 +37,7 @@ const Create: Component = () => {
 			mode && unit && interval ? { ...base, mode, unit, interval, anchor } : undefined;
 
 		createItem(item, user, template);
-		navigateToList();
+		navigation.back();
 	};
 
 	const resetForm = (type: Type) =>

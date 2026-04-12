@@ -1,5 +1,5 @@
 import { useLocation } from "@solidjs/router";
-import { useNavigateFromList, useNavigateToList } from "../library/navigation";
+import { useNavigation } from "../library/navigation";
 import Button from "./Button";
 import Icon from "./Icon";
 import { Show } from "solid-js";
@@ -7,8 +7,7 @@ import { Transition } from "solid-transition-group";
 
 const Footer = () => {
 	const location = useLocation();
-	const navigateFromList = useNavigateFromList();
-	const navigateToList = useNavigateToList();
+	const navigation = useNavigation();
 	const showClose = () =>
 		location.pathname === "/menu" ||
 		location.pathname === "/create" ||
@@ -22,16 +21,16 @@ const Footer = () => {
 					when={showClose()}
 					fallback={
 						<div class="flex gap-l">
-							<Button onClick={() => navigateFromList("/menu")}>
+							<Button onClick={() => navigation.push("/menu")}>
 								<Icon>more_vert</Icon>
 							</Button>
-							<Button onClick={() => navigateFromList("/create")}>
+							<Button onClick={() => navigation.push("/create")}>
 								<Icon>playlist_add</Icon>
 							</Button>
 						</div>
 					}
 				>
-					<Button onClick={navigateToList}>
+					<Button onClick={navigation.back}>
 						<Icon>close</Icon>
 					</Button>
 				</Show>
