@@ -14,7 +14,7 @@ const Layout: ParentComponent = (props) => {
 	const auth = db.useAuth();
 
 	return (
-		<div class="h-dvh w-dvh md:w-[600px] md:m-auto">
+		<div class="h-dvh w-dvw md:w-[600px] md:m-auto">
 			<Show when={!auth().isLoading}>
 				<Show when={auth().user} fallback={<Login />}>
 					{(user) => (
