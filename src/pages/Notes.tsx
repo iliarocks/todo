@@ -24,7 +24,7 @@ const Notes: Component = () => {
 						<h1>{data().text}</h1>
 						<Button>
 							<A
-								href={`/edit/${params.type}/${params.id}`}
+								href={`/edit/${params.id}`}
 								state={{ origin: (location.state as any)?.origin }}
 							>
 								Edit

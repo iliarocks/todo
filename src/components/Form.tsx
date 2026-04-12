@@ -1,30 +1,55 @@
-import { Component, For, Show } from "solid-js";
+import { Component, For, Show, splitProps } from "solid-js";
 import { JSX } from "solid-js";
 import { Temporal } from "temporal-polyfill";
 import { parseDate, parseTime, today } from "../library/date";
 import { Mode, Unit, UNITS } from "../library/types";
 
-export const Input: Component<JSX.InputHTMLAttributes<HTMLInputElement>> = (props) => (
-	<input class="p-s rounded-lg bg-[var(--surface)]" {...props} />
-);
+export const Input: Component<
+	Omit<JSX.InputHTMLAttributes<HTMLInputElement>, "value" | "onInput"> & {
+		value: string | undefined;
+		onInput: (value: string | undefined) => void;
+	}
+> = (props) => {
+	const [local, others] = splitProps(props, ["value", "onInput"]);
 
-export const TextArea: Component<JSX.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
-	<textarea
-		class="p-s rounded-lg bg-[var(--surface)] resize-none field-sizing-content"
-		{...props}
-	/>
-);
+	return (
+		<input
+			{...others}
+			class="p-s rounded-lg bg-[var(--surface)]"
+			value={local.value ?? ""}
+			onInput={(e) => local.onInput(e.currentTarget.value || undefined)}
+		/>
+	);
+};
+
+export const TextArea: Component<
+	Omit<JSX.TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "onInput"> & {
+		value: string | undefined;
+		onInput: (value: string | undefined) => void;
+	}
+> = (props) => {
+	const [local, others] = splitProps(props, ["value", "onInput"]);
+
+	return (
+		<textarea
+			{...others}
+			class="p-s rounded-lg bg-[var(--surface)] resize-none field-sizing-content"
+			value={local.value ?? ""}
+			onInput={(e) => local.onInput(e.currentTarget.value || undefined)}
+		/>
+	);
+};
 
 export const DateInput: Component<{
-	date: Temporal.PlainDate;
-	setDate: (date: Temporal.PlainDate) => void;
+	date: Temporal.PlainDate | undefined;
+	setDate: (date: Temporal.PlainDate | undefined) => void;
 }> = (props) => {
 	return (
 		<Input
 			type="date"
-			value={props.date.toString()}
+			value={props.date?.toString()}
 			min={today().toString()}
-			onInput={(e) => props.setDate(parseDate(e.currentTarget.value))}
+			onInput={(s) => props.setDate(s ? parseDate(s) : undefined)}
 			required
 		/>
 	);
@@ -38,10 +63,7 @@ export const TimeInput: Component<{
 		<Input
 			type="time"
 			value={props.time?.round({ smallestUnit: "minute" }).toString()}
-			onInput={(e) => {
-				const value = e.currentTarget.value;
-				props.setTime(value ? parseTime(value) : undefined);
-			}}
+			onInput={(s) => props.setTime(s ? parseTime(s) : undefined)}
 		/>
 	);
 };
@@ -72,7 +94,7 @@ export const RepeatInputs: Component<{
 			props.setMode(value);
 			props.setUnit("day");
 			props.setInterval(1);
-			props.setAnchor(value === "absolute" ? (props.unit === "day" ? [] : [0]) : undefined);
+			props.setAnchor(value === "absolute" ? [] : undefined);
 		}
 	};
 
@@ -95,8 +117,8 @@ export const RepeatInputs: Component<{
 					<span class="text-[var(--secondary)]">Every</span>
 					<Input
 						type="number"
-						value={props.interval}
-						onInput={(e) => props.setInterval(Number(e.currentTarget.value))}
+						value={props.interval?.toString()}
+						onInput={(s) => props.setInterval(s ? Number(s) : undefined)}
 						class="py-xs w-12 text-center"
 						required
 					/>

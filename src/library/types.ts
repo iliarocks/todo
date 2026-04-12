@@ -3,7 +3,7 @@ import schema from "../instant.schema";
 import { Temporal } from "temporal-polyfill";
 import { parseDate, parseTime } from "./date";
 
-export const TYPES = ["todo", "event"];
+export const TYPES = ["todo", "event"] as const;
 export const MODES = ["absolute", "relative"] as const;
 export const UNITS = ["day", "week", "month"] as const;
 
@@ -42,7 +42,7 @@ export type Template = {
 	reference?: Temporal.PlainDate;
 };
 
-export const parseItem = (base: DatabaseItem): Item => {
+const parseItem = (base: DatabaseItem): Item => {
 	const { type, date, start, end } = base;
 
 	return {
@@ -54,7 +54,7 @@ export const parseItem = (base: DatabaseItem): Item => {
 	};
 };
 
-export const parseTemplate = (base: DatabaseTemplate): Template => {
+const parseTemplate = (base: DatabaseTemplate): Template => {
 	const { type, start, end, mode, unit, reference } = base;
 
 	return {
@@ -68,12 +68,64 @@ export const parseTemplate = (base: DatabaseTemplate): Template => {
 	};
 };
 
-export const parseItemWithTemplate = (base: DatabaseItem & { template?: DatabaseTemplate }): Item & { template?: Template } => ({
-	...parseItem(base),
-	template: base.template ? parseTemplate(base.template) : undefined,
+export const parseItemTemplate = (base: DatabaseItem & { template?: DatabaseTemplate }) => {
+	const { template } = base;
+
+	return {
+		...parseItem(base),
+		template: template ? parseTemplate(template) : undefined,
+	};
+};
+
+export const parseTemplateInstance = (base: DatabaseTemplate & { instance?: DatabaseItem }) => {
+	const { instance } = base;
+
+	if (instance === undefined) return null;
+
+	return {
+		...parseTemplate(base),
+		instance: parseItem(instance),
+	};
+};
+
+export const serializeItem = (item: Omit<Item, "id">) => ({
+	...item,
+	date: item.date.toString(),
+	start: item.start?.toString(),
+	end: item.end?.toString(),
 });
 
-export const parseTemplateWithInstance = (base: DatabaseTemplate & { instance?: DatabaseItem }): (Template & { instance: Item }) | null => {
-	if (!base.instance) return null;
-	return { ...parseTemplate(base), instance: parseItem(base.instance) };
+export const serializeItemUpdate = (update: Partial<Omit<Item, "id">>) => {
+	const output: Record<string, unknown> = {};
+	if ("type" in update) output.type = update.type;
+	if ("text" in update) output.text = update.text;
+	if ("date" in update) output.date = update.date?.toString();
+	if ("order" in update) output.order = update.order;
+	if ("notes" in update) output.notes = update.notes ?? null;
+	if ("start" in update) output.start = update.start?.toString() ?? null;
+	if ("end" in update) output.end = update.end?.toString() ?? null;
+	return output;
+};
+
+export const serializeTemplate = (template: Omit<Template, "id">) => ({
+	...template,
+	start: template.start?.toString(),
+	end: template.end?.toString(),
+	reference: template.reference?.toString(),
+	anchor: template.anchor ? [...template.anchor] : undefined,
+});
+
+export const serializeTemplateUpdate = (update: Partial<Omit<Template, "id">>) => {
+	const output: Record<string, unknown> = {};
+	if ("type" in update) output.type = update.type;
+	if ("text" in update) output.text = update.text;
+	if ("mode" in update) output.mode = update.mode;
+	if ("unit" in update) output.unit = update.unit;
+	if ("interval" in update) output.interval = update.interval;
+	if ("notes" in update) output.notes = update.notes ?? null;
+	if ("start" in update) output.start = update.start?.toString() ?? null;
+	if ("end" in update) output.end = update.end?.toString() ?? null;
+	if ("anchor" in update) output.anchor = update.anchor ? [...update.anchor] : null;
+	if ("reference" in update) output.reference = update.reference?.toString() ?? null;
+	return output;
 };

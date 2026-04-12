@@ -1,5 +1,5 @@
 import { Accessor, createContext, createMemo, ParentComponent, useContext } from "solid-js";
-import { Item, parseItemWithTemplate, parseTemplateWithInstance, Template } from "../library/types";
+import { Item, parseItemTemplate, parseTemplateInstance, Template } from "../library/types";
 import { useUser } from "./auth";
 import { db } from "../library/db";
 
@@ -18,9 +18,9 @@ export const DataProvider: ParentComponent = (props) => {
 	});
 
 	const value = {
-		items: createMemo(() => (state().data?.items ?? []).map(parseItemWithTemplate)),
+		items: createMemo(() => (state().data?.items ?? []).map(parseItemTemplate)),
 		templates: createMemo(() => (state().data?.templates ?? []).flatMap((t) => {
-			const parsed = parseTemplateWithInstance(t);
+			const parsed = parseTemplateInstance(t);
 			return parsed ? [parsed] : [];
 		})),
 	};

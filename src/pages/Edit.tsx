@@ -1,155 +1,155 @@
-import { useNavigate, useParams } from "@solidjs/router";
-import { type Component, Show } from "solid-js";
-import { createStore } from "solid-js/store";
-import { Item, Template, MODES } from "../library/types";
-import { today } from "../library/date";
-import Button from "../components/Button";
-import { CreateParameters, updateItem, updateTemplate, deleteTemplate } from "../library/mutations";
-import { between } from "../library/order";
-import { Temporal } from "temporal-polyfill";
-import { useNavigateToList } from "../library/navigation";
+import { useParams } from "@solidjs/router";
+import { type Component, Switch, Match, Show } from "solid-js";
+import { Item, MODES, Template } from "../library/types";
 import { useData } from "../context/data";
-import { useUser } from "../context/auth";
-import { deleteItem } from "../library/db";
+import { createStore } from "solid-js/store";
+import { deleteItem, deleteTemplate, updateItem, updateTemplate } from "../library/db";
 import { DateInput, Input, RepeatInputs, TextArea, TimeInput } from "../components/Form";
+import Button from "../components/Button";
 
 const Edit: Component = () => {
-	const params = useParams<{ source: string; id: string }>();
-	const navigate = useNavigate();
-	const navigateToList = useNavigateToList();
+	const params = useParams<{ id: string }>();
 	const data = useData();
-	const user = useUser();
-
-	const loaded = () => {
-		if (params.source === "template") return data.templates().find((t) => t.id === params.id);
-		return data.items().find((i) => i.id === params.id);
-	};
-
-	const lastOrder = () => data.items().at(-1)?.order;
+	const template = () => data.templates().find((t) => t.id === params.id);
+	const item = () => data.items().find((i) => i.id === params.id);
 
 	return (
-		<Show when={loaded()}>
-			{(data) => {
-				const isTemplate = "instance" in data();
-				const [form, setForm] = createStore<CreateParameters>(
-					isTemplate
-						? initializeTemplate(data() as Template & { instance: Item })
-						: initializeItem(data() as Item & { template?: Template }),
-				);
-
-				const handleSubmit = (e: SubmitEvent) => {
-					e.preventDefault();
-
-					if (isTemplate) {
-						const template = data() as Template & { instance: Item };
-						updateTemplate(template.id, template.instance.id, form);
-					} else {
-						const item = data() as Item & { template?: Template };
-						const wasFuture = Temporal.PlainDate.compare(item.date, today()) > 0;
-						const isNow = Temporal.PlainDate.compare(form.date, today()) <= 0;
-						const order = wasFuture && isNow ? between(lastOrder(), undefined) : undefined;
-						updateItem(item.id, form, item.template?.id, order);
-					}
-
-					navigate(`/notes/${isTemplate ? "template" : "instance"}/${data().id}`);
-				};
-
-				const handleDelete = () => {
-					if (isTemplate) {
-						deleteTemplate((data() as Template).id);
-					} else {
-						deleteItem(data() as Item & { template?: Template }, user);
-					}
-
-					navigateToList();
-				};
-
-				return (
-					<form onSubmit={handleSubmit} class="flex flex-col gap-s">
-						<section class="flex justify-between">
-							<Button type="button" onClick={handleDelete}>
-								Delete
-							</Button>
-							<Button type="submit">Save</Button>
-						</section>
-						<Input
-							type="text"
-							placeholder="Text"
-							value={form.text}
-							onInput={(e) => setForm({ text: e.currentTarget.value })}
-							required
-							autofocus
-						/>
-						<TextArea
-							placeholder="Notes"
-							value={form.notes ?? ""}
-							onInput={(e) => setForm({ notes: e.currentTarget.value || undefined })}
-						/>
-						<Show when={!isTemplate}>
-							<section class="flex flex-col gap-xs">
-								<p class="text-xs text-[var(--secondary)]">WHEN</p>
-								<div class="flex gap-xs">
-									<DateInput date={form.date} setDate={(date) => setForm({ date })} />
-									<Show when={form.type === "event"}>
-										<TimeInput time={form.start} setTime={(start) => setForm({ start })} />
-										<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
-									</Show>
-								</div>
-							</section>
-						</Show>
-						<Show when={isTemplate}>
-							<section class="flex flex-col gap-xs">
-								<p class="text-xs text-[var(--secondary)]">REPEAT</p>
-								<RepeatInputs
-									modes={form.type === "event" ? MODES.slice(0, -1) : [...MODES]}
-									mode={form.mode}
-									interval={form.interval}
-									unit={form.unit}
-									anchor={form.anchor}
-									setMode={(mode) => setForm({ mode })}
-									setInterval={(interval) => setForm({ interval })}
-									setUnit={(unit) => setForm({ unit })}
-									setAnchor={(anchor) => setForm({ anchor })}
-								/>
-							</section>
-						</Show>
-					</form>
-				);
-			}}
-		</Show>
+		<Switch>
+			<Match when={template()}>{(t) => <EditTemplate template={t()} />}</Match>
+			<Match when={item()}>{(i) => <EditItem item={i()} />}</Match>
+		</Switch>
 	);
 };
 
-const initializeItem = (data: Item & { template?: Template }): CreateParameters => {
-	const tpl = data.template;
-	return {
-		type: data.type,
-		text: data.text,
-		notes: data.notes,
-		date: data.date,
-		start: data.type === "event" ? data.start : undefined,
-		end: data.type === "event" ? data.end : undefined,
-		mode: tpl?.mode,
-		interval: tpl?.interval,
-		unit: tpl?.unit,
-		anchor: tpl?.mode === "absolute" ? tpl.anchor : undefined,
+const EditTemplate: Component<{ template: Template & { instance: Item } }> = (props) => {
+	const template = () => props.template;
+	const [form, setForm] = createStore({
+		text: template().text,
+		notes: template().notes,
+		start: template().start,
+		end: template().end,
+		mode: template().mode,
+		unit: template().unit,
+		interval: template().interval,
+		anchor: template().anchor,
+	});
+
+	const handleSubmit = (e: SubmitEvent) => {
+		e.preventDefault();
+
+		updateTemplate(template(), {
+			text: form.text,
+			notes: form.notes,
+			start: form.start,
+			end: form.end,
+			mode: form.mode,
+			unit: form.unit,
+			interval: form.interval,
+			anchor: form.anchor,
+		});
+		// add navigation back to notes
 	};
+
+	const handleDelete = () => deleteTemplate(template());
+
+	return (
+		<form onSubmit={handleSubmit} class="flex flex-col gap-m">
+			<section class="flex justify-between">
+				<Button type="button" onClick={handleDelete}>
+					Delete
+				</Button>
+				<Button type="submit">Save</Button>
+			</section>
+			<Input
+				type="text"
+				placeholder="Text"
+				value={form.text}
+				onInput={(text) => setForm({ text })}
+				autofocus
+				required
+			/>
+			<TextArea placeholder="Notes" value={form.notes} onInput={(notes) => setForm({ notes })} />
+			<Show when={template().type === "event"}>
+				<section class="flex flex-col gap-xs">
+					<p class="text-xs text-[var(--secondary)]">WHEN</p>
+					<div class="flex gap-xs">
+						<TimeInput time={form.start} setTime={(start) => setForm({ start })} />
+						<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
+					</div>
+				</section>
+			</Show>
+			<section class="flex flex-col gap-xs">
+				<p class="text-xs text-[var(--secondary)]">REPEAT</p>
+				<RepeatInputs
+					modes={template().type === "event" ? MODES.slice(0, -1) : [...MODES]}
+					mode={form.mode}
+					interval={form.interval}
+					unit={form.unit}
+					anchor={form.anchor}
+					setMode={(mode) => setForm({ mode })}
+					setInterval={(interval) => setForm({ interval })}
+					setUnit={(unit) => setForm({ unit })}
+					setAnchor={(anchor) => setForm({ anchor })}
+				/>
+			</section>
+		</form>
+	);
 };
 
-const initializeTemplate = (data: Template & { instance: Item }): CreateParameters => {
-	const isEvent = data.type === "event";
-	return {
-		type: data.type,
-		text: data.text,
-		notes: data.notes,
-		date: data.instance.date,
-		start: isEvent ? data.start : undefined,
-		end: isEvent ? data.end : undefined,
-		mode: data.mode,
-		interval: data.interval,
-		unit: data.unit,
-		anchor: data.mode === "absolute" ? data.anchor : undefined,
+const EditItem: Component<{ item: Item & { template?: Template } }> = (props) => {
+	const item = () => props.item;
+	const [form, setForm] = createStore({
+		text: item().text,
+		notes: item().notes,
+		date: item().date,
+		start: item().start,
+		end: item().end,
+	});
+
+	const handleSubmit = (e: SubmitEvent) => {
+		e.preventDefault();
+
+		updateItem(item(), {
+			text: form.text,
+			notes: form.notes,
+			date: form.date,
+			start: form.start,
+			end: form.end,
+		});
+		// add navigation back to notes
 	};
+
+	const handleDelete = () => deleteItem(item());
+
+	return (
+		<form onSubmit={handleSubmit} class="flex flex-col gap-m">
+			<section class="flex justify-between">
+				<Button type="button" onClick={handleDelete}>
+					Delete
+				</Button>
+				<Button type="submit">Save</Button>
+			</section>
+			<Input
+				type="text"
+				placeholder="Text"
+				value={form.text}
+				onInput={(text) => setForm({ text })}
+				autofocus
+				required
+			/>
+			<TextArea placeholder="Notes" value={form.notes} onInput={(notes) => setForm({ notes })} />
+			<section class="flex flex-col gap-xs">
+				<p class="text-xs text-[var(--secondary)]">WHEN</p>
+				<div class="flex gap-xs">
+					<DateInput date={form.date} setDate={(date) => setForm({ date })} />
+					<Show when={item().type === "event"}>
+						<TimeInput time={form.start} setTime={(start) => setForm({ start })} />
+						<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
+					</Show>
+				</div>
+			</section>
+		</form>
+	);
 };
 
 export default Edit;

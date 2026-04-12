@@ -3,7 +3,6 @@ import { Component, Show } from "solid-js";
 import { Item, Template } from "../library/types";
 import Icon from "./Icon";
 import { useNavigateFromList } from "../library/navigation";
-import { useUser } from "../context/auth";
 import { deleteItem } from "../library/db";
 
 const format = (t: Temporal.PlainTime) =>
@@ -12,12 +11,11 @@ const format = (t: Temporal.PlainTime) =>
 const TodoItem: Component<{ todo: Item & { template?: Template }; virtual?: boolean }> = (
 	props,
 ) => {
-	const user = useUser();
 	const navigateFromList = useNavigateFromList();
 	const todo = () => props.todo;
 	const virtual = () => props.virtual ?? false;
 
-	const onComplete = () => deleteItem(todo(), user);
+	const onComplete = () => deleteItem(todo());
 
 	return (
 		<li
