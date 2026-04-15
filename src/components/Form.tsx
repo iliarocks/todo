@@ -10,12 +10,12 @@ export const Input: Component<
 		onInput: (value: string | undefined) => void;
 	}
 > = (props) => {
-	const [local, others] = splitProps(props, ["value", "onInput"]);
+	const [local, others] = splitProps(props, ["value", "onInput", "class"]);
 
 	return (
 		<input
 			{...others}
-			class="p-s rounded-lg bg-[var(--surface)]"
+			class={`p-s rounded-lg bg-[var(--surface)] ${local.class ?? ""}`}
 			value={local.value ?? ""}
 			onInput={(e) => local.onInput(e.currentTarget.value || undefined)}
 		/>
