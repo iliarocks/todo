@@ -3,6 +3,7 @@ import { useNavigation } from "../library/navigation";
 import IconButton from "./IconButton";
 import { Show } from "solid-js";
 import { Transition } from "solid-transition-group";
+import { fadeTransition } from "../library/transitions";
 
 const Footer = () => {
 	const location = useLocation();
@@ -15,7 +16,7 @@ const Footer = () => {
 
 	return (
 		<div class="flex justify-center gap-l">
-			<Transition name="footer" mode="outin">
+			<Transition {...fadeTransition} mode="outin">
 				<Show
 					when={showClose()}
 					fallback={

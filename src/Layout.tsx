@@ -6,6 +6,7 @@ import { DataProvider } from "./context/data";
 import Login from "./pages/Login";
 import Footer from "./components/Footer";
 import { Transition } from "solid-transition-group";
+import { fadeTransition } from "./library/transitions";
 import Cleanup from "./components/Cleanup";
 
 const Layout: ParentComponent = (props) => {
@@ -22,7 +23,7 @@ const Layout: ParentComponent = (props) => {
 							<DataProvider>
 								<div class="flex flex-col h-full w-full py-m px-s gap-m">
 									<main class="grow overflow-y-scroll">
-										<Transition name="page" mode="outin">
+										<Transition {...fadeTransition} mode="outin">
 											{props.children}
 										</Transition>
 									</main>

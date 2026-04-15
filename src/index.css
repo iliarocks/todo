@@ -55,26 +55,3 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
-
-.footer-enter-active,
-.footer-exit-active {
-  transition: opacity 150ms ease;
-}
-.footer-enter-from,
-.footer-exit-to {
-  opacity: 0;
-}
-
-
-.page-enter-active,
-.page-exit-active {
-  transition: opacity 200ms ease, transform 200ms ease;
-}
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(4px);
-}
-.page-exit-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
