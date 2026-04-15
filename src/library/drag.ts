@@ -8,6 +8,7 @@ type DragState = {
 	element: HTMLElement;
 	children: HTMLElement[];
 	startY: number;
+	centerOffset: number;
 	rects: DOMRect[];
 	active: boolean;
 };
@@ -48,6 +49,7 @@ export const createDragReorder = (
 			if (Math.abs(dy) < 5) return;
 			drag.active = true;
 			drag.element.style.zIndex = "10";
+			drag.element.style.backgroundColor = "var(--accent)";
 			for (const child of drag.children) {
 				if (child !== drag.element) {
 					child.style.transition = "transform 150ms ease";
@@ -57,7 +59,7 @@ export const createDragReorder = (
 
 		drag.element.style.transform = `translateY(${dy}px)`;
 
-		const slot = findSlot(e.clientY, drag.rects);
+		const slot = findSlot(e.clientY - drag.centerOffset, drag.rects);
 		if (slot !== drag.slot) {
 			drag.slot = slot;
 			shiftSiblings();
@@ -73,6 +75,7 @@ export const createDragReorder = (
 		element.removeEventListener("pointerup", onPointerUp);
 		element.style.transform = "";
 		element.style.zIndex = "";
+		element.style.backgroundColor = "";
 
 		for (const child of children) {
 			if (child !== element) {
@@ -82,12 +85,15 @@ export const createDragReorder = (
 		}
 
 		if (active) {
+			const parent = element.parentElement!;
 			const suppress = (e: Event) => {
 				e.stopPropagation();
 				e.preventDefault();
-				element.removeEventListener("click", suppress, true);
+				done();
 			};
-			element.addEventListener("click", suppress, true);
+			const done = () => parent.removeEventListener("click", suppress, true);
+			parent.addEventListener("click", suppress, true);
+			setTimeout(done, 300);
 
 			if (slot !== index && slot !== index + 1) {
 				const list = items();
@@ -115,6 +121,8 @@ export const createDragReorder = (
 		element.addEventListener("pointermove", onPointerMove);
 		element.addEventListener("pointerup", onPointerUp);
 
+		const rects = children.map((c) => c.getBoundingClientRect());
+
 		drag = {
 			item,
 			index,
@@ -122,7 +130,8 @@ export const createDragReorder = (
 			element,
 			children,
 			startY: e.clientY,
-			rects: children.map((c) => c.getBoundingClientRect()),
+			centerOffset: e.clientY - (rects[index].top + rects[index].height / 2),
+			rects,
 			active: false,
 		};
 	};
