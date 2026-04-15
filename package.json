@@ -19,8 +19,6 @@
     "vite-plugin-solid": "^2.11.8"
   },
   "dependencies": {
-    "@fontsource/ibm-plex-mono": "^5.2.7",
-    "@fontsource/ibm-plex-sans": "^5.2.8",
     "@instantdb/solidjs": "latest",
     "@solidjs/router": "^0.15.4",
     "@vercel/analytics": "^2.0.0",
