@@ -29,7 +29,7 @@ const Login: Component = () => {
 							type="email"
 							placeholder="Email"
 							value={email()}
-							onInput={(e) => setEmail(e.currentTarget.value)}
+							onInput={(email) => email && setEmail(email)}
 							required
 						/>
 						<Button type="submit">Send code</Button>
@@ -42,7 +42,7 @@ const Login: Component = () => {
 							type="text"
 							placeholder="Code"
 							value={code()}
-							onInput={(e) => setCode(e.currentTarget.value)}
+							onInput={(code) => code && setCode(code)}
 							required
 						/>
 						<Button type="submit">Sign in</Button>

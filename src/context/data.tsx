@@ -1,11 +1,14 @@
-import { Accessor, createContext, createMemo, ParentComponent, useContext } from "solid-js";
+import { Accessor, createContext, createEffect, ParentComponent, useContext } from "solid-js";
+import { createStore, reconcile } from "solid-js/store";
 import { Item, parseItemTemplate, parseTemplateInstance, Template } from "../library/types";
 import { useUser } from "./auth";
 import { db } from "../library/db";
 
+type Items = (Item & { template?: Template })[];
+type Templates = (Template & { instance: Item })[];
 type Data = {
-	items: Accessor<(Item & { template?: Template })[]>;
-	templates: Accessor<(Template & { instance: Item })[]>;
+	items: Accessor<Items>;
+	templates: Accessor<Templates>;
 };
 
 const DataContext = createContext<Data>();
@@ -17,12 +20,27 @@ export const DataProvider: ParentComponent = (props) => {
 		templates: { $: { where: { "user.id": user.id } }, instance: {} },
 	});
 
+	const [store, setStore] = createStore({
+		items: [] as Items,
+		templates: [] as Templates,
+	});
+
+	createEffect(() => {
+		setStore("items", reconcile((state().data?.items ?? []).map(parseItemTemplate)));
+		setStore(
+			"templates",
+			reconcile(
+				(state().data?.templates ?? []).flatMap((t) => {
+					const parsed = parseTemplateInstance(t);
+					return parsed ? [parsed] : [];
+				}),
+			),
+		);
+	});
+
 	const value = {
-		items: createMemo(() => (state().data?.items ?? []).map(parseItemTemplate)),
-		templates: createMemo(() => (state().data?.templates ?? []).flatMap((t) => {
-			const parsed = parseTemplateInstance(t);
-			return parsed ? [parsed] : [];
-		})),
+		items: () => store.items,
+		templates: () => store.templates,
 	};
 
 	return <DataContext.Provider value={value}>{props.children}</DataContext.Provider>;

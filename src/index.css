@@ -64,11 +64,3 @@ input[type="number"] {
   opacity: 0;
   transform: translateY(-4px);
 }
-
-@media (prefers-reduced-motion) {
-  *,
-  ::before,
-  ::after {
-    animation: none !important;
-  }
-}
