@@ -8,74 +8,46 @@ import { deleteItem } from "../library/db";
 const format = (t: Temporal.PlainTime) =>
 	t.round({ smallestUnit: "minute" }).toString().slice(0, 5);
 
-const TodoItem: Component<{ todo: Item & { template?: Template }; virtual?: boolean }> = (
-	props,
-) => {
+const ListItem: Component<{
+	item: Item & { template?: Template };
+	virtual?: boolean;
+	onPointerDown?: (e: PointerEvent) => void;
+}> = (props) => {
 	const navigation = useNavigation();
-	const todo = () => props.todo;
-	const virtual = () => props.virtual ?? false;
-
-	const onComplete = () => deleteItem(todo());
-
-	return (
-		<li
-			onClick={() => navigation.push(`/notes/${todo().id}`)}
-			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
-		>
-			<p>{todo().text}</p>
-			{virtual() ? (
-				<Icon size={15}>repeat</Icon>
-			) : (
-				<button
-					onClick={(e) => {
-						e.stopPropagation();
-						onComplete();
-					}}
-					onPointerDown={(e) => e.stopPropagation()}
-					class="flex text-[var(--secondary)] hover:text-[var(--primary)] cursor-pointer"
-				>
-					<Icon size={15}>check_box_outline_blank</Icon>
-				</button>
-			)}
-		</li>
-	);
-};
-
-const EventItem: Component<{ event: Item; virtual?: boolean }> = (props) => {
-	const navigation = useNavigation();
-	const event = () => props.event;
+	const item = () => props.item;
 	const virtual = () => props.virtual ?? false;
 
 	return (
 		<li
-			onClick={() => navigation.push(`/notes/${event().id}`)}
-			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
+			onClick={() => navigation.push(`/notes/${item().id}`)}
+			onPointerDown={props.onPointerDown}
+			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)] touch-none select-none"
 		>
-			<p>{event().text}</p>
-			<Show when={event().start && event().end}>
-				<div class="flex gap-s items-center">
+			<p>{item().text}</p>
+			<div class="flex gap-s items-center">
+				<Show when={item().type === "event" && item().start && item().end}>
 					<p class="text-[var(--secondary)] text-xs font-light">
-						{format(event().start!)} – {format(event().end!)}
+						{format(item().start!)} – {format(item().end!)}
 					</p>
-					<Show when={virtual()}>
-						<Icon size={15}>repeat</Icon>
-					</Show>
-				</div>
-			</Show>
+				</Show>
+				<Show when={item().type === "todo" && !virtual()}>
+					<button
+						onClick={(e) => {
+							e.stopPropagation();
+							deleteItem(item());
+						}}
+						onPointerDown={(e) => e.stopPropagation()}
+						class="flex text-[var(--secondary)] hover:text-[var(--primary)] cursor-pointer"
+					>
+						<Icon size={15}>check_box_outline_blank</Icon>
+					</button>
+				</Show>
+				<Show when={virtual()}>
+					<Icon size={15}>repeat</Icon>
+				</Show>
+			</div>
 		</li>
 	);
-};
-
-const ListItem: Component<{ item: Item & { template?: Template }; virtual?: boolean }> = (
-	props,
-) => {
-	const virtual = () => props.virtual ?? false;
-
-	if (props.item.type === "todo") {
-		return <TodoItem todo={props.item} virtual={virtual()} />;
-	}
-
-	return <EventItem event={props.item} virtual={virtual()} />;
 };
 
 export default ListItem;
