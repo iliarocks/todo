@@ -7,12 +7,14 @@ import Layout from "./Layout";
 import Upcoming from "./pages/Upcoming";
 import Notes from "./pages/Notes";
 import Edit from "./pages/Edit";
+import Vision from "./pages/Vision";
 
 const App: Component = () => {
 	return (
 		<Router root={Layout}>
 			<Route path="/" component={Today} />
 			<Route path="/upcoming" component={Upcoming} />
+			<Route path="/vision" component={Vision} />
 			<Route path="/notes/:id" component={Notes} />
 			<Route path="/edit/:id" component={Edit} />
 			<Route path="/create" component={Create} />

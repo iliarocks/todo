@@ -16,6 +16,13 @@ export type PlainTime = Temporal.PlainTime;
 
 type DatabaseItem = InstaQLEntity<typeof schema, "items">;
 type DatabaseTemplate = InstaQLEntity<typeof schema, "templates">;
+type DatabaseVision = InstaQLEntity<typeof schema, "visions">;
+
+export type Vision = {
+	id: string;
+	text: string;
+	reminder?: Item;
+};
 
 export type Item = {
 	id: string;
@@ -87,6 +94,12 @@ export const parseTemplateInstance = (base: DatabaseTemplate & { instance?: Data
 		instance: parseItem(instance),
 	};
 };
+
+export const parseVision = (base: DatabaseVision & { reminder?: DatabaseItem }): Vision => ({
+	id: base.id,
+	text: base.text,
+	reminder: base.reminder ? parseItem(base.reminder) : undefined,
+});
 
 export const serializeItem = (item: Omit<Item, "id">) => ({
 	...item,

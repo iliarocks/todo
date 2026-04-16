@@ -12,6 +12,9 @@ const Navigation: Component = () => {
 			<A href="/upcoming" class="text-4xl font-medium">
 				Upcoming
 			</A>
+			<A href="/vision" class="text-4xl font-medium">
+				Vision
+			</A>
 			<Button onClick={() => db.auth.signOut()} class="text-[var(--secondary)]">
 				Sign out
 			</Button>

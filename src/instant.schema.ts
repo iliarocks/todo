@@ -33,6 +33,15 @@ const _schema = i.schema({
 			anchor: i.json().optional(),
 			reference: i.string().optional(),
 		}),
+		visions: i.entity({
+			text: i.string(),
+		}),
+		projects: i.entity({
+			name: i.string(),
+			notes: i.string().optional(),
+			active: i.boolean(),
+			order: i.string(),
+		}),
 	},
 	links: {
 		itemUser: {
@@ -46,6 +55,26 @@ const _schema = i.schema({
 		templateItems: {
 			forward: { on: "templates", has: "one", label: "instance", required: true },
 			reverse: { on: "items", has: "one", label: "template" },
+		},
+		visionUser: {
+			forward: { on: "visions", has: "one", label: "user", onDelete: "cascade", required: true },
+			reverse: { on: "$users", has: "one", label: "vision" },
+		},
+		visionReminder: {
+			forward: { on: "visions", has: "one", label: "reminder" },
+			reverse: { on: "items", has: "one", label: "vision" },
+		},
+		projectUser: {
+			forward: { on: "projects", has: "one", label: "user", onDelete: "cascade", required: true },
+			reverse: { on: "$users", has: "many", label: "projects" },
+		},
+		itemProject: {
+			forward: { on: "items", has: "one", label: "project" },
+			reverse: { on: "projects", has: "many", label: "items" },
+		},
+		templateProject: {
+			forward: { on: "templates", has: "one", label: "project" },
+			reverse: { on: "projects", has: "many", label: "templates" },
 		},
 	},
 	rooms: {},
