@@ -71,6 +71,7 @@ const EditTemplateForm: Component<{
 				interval={form.interval}
 				unit={form.unit}
 				anchor={form.anchor}
+				allowNone={false}
 				setMode={(mode) => setForm({ mode })}
 				setInterval={(interval) => setForm({ interval })}
 				setUnit={(unit) => setForm({ unit })}

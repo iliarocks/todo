@@ -74,6 +74,7 @@ export const RepeatInputs: Component<{
 	interval: number | undefined;
 	unit: Unit | undefined;
 	anchor: number[] | undefined;
+	allowNone?: boolean;
 	setMode: (mode: Mode | undefined) => void;
 	setInterval: (interval: number | undefined) => void;
 	setUnit: (unit: Unit | undefined) => void;
@@ -81,7 +82,7 @@ export const RepeatInputs: Component<{
 }> = (props) => {
 	const WEEK_DAYS = ["m", "t", "w", "t", "f", "s", "s"];
 	const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
-	const options = () => ["none" as const, ...props.modes];
+	const options = () => (props.allowNone !== false ? ["none" as const, ...props.modes] : props.modes);
 
 	const selectMode = (index: number) => {
 		const value = options()[index];
