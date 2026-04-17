@@ -1,15 +1,21 @@
-import { type Component } from "solid-js";
+import { type Component, For, Show } from "solid-js";
 import { Temporal } from "temporal-polyfill";
 import { useUser } from "../context/auth";
 import { useData } from "../context/data";
-import { createVision, updateVision, saveReminder } from "../library/db";
+import { createProject, createVision, updateVision, saveReminder } from "../library/db";
+import { useNavigation } from "../library/navigation";
 import { DateInput } from "../components/Form";
 import { between } from "../library/order";
 import RichText from "../components/RichText";
+import IconButton from "../components/IconButton";
 
 const Vision: Component = () => {
 	const user = useUser();
 	const data = useData();
+	const navigation = useNavigation();
+
+	const projects = () => data.projects().filter((p) => p.active);
+	const groups = () => data.projects().filter((p) => !p.active);
 
 	const saveText = (text: string | undefined) => {
 		const vision = data.vision();
@@ -41,6 +47,50 @@ const Vision: Component = () => {
 				value={data.vision()?.text}
 				onInput={saveText}
 			/>
+			<section class="flex flex-col gap-xs">
+				<div class="flex justify-between items-center">
+					<h2 class="text-xs text-[var(--secondary)]">PROJECTS</h2>
+					<IconButton size={18} onClick={() => createProject("New project", true, user)}>
+						add
+					</IconButton>
+				</div>
+				<Show when={projects().length > 0}>
+					<ul class="flex flex-col">
+						<For each={projects()}>
+							{(project) => (
+								<li
+									onClick={() => navigation.push(`/project/${project.id}`)}
+									class="p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
+								>
+									{project.name}
+								</li>
+							)}
+						</For>
+					</ul>
+				</Show>
+			</section>
+			<section class="flex flex-col gap-xs">
+				<div class="flex justify-between items-center">
+					<h2 class="text-xs text-[var(--secondary)]">GROUPS</h2>
+					<IconButton size={18} onClick={() => createProject("New group", false, user)}>
+						add
+					</IconButton>
+				</div>
+				<Show when={groups().length > 0}>
+					<ul class="flex flex-col">
+						<For each={groups()}>
+							{(group) => (
+								<li
+									onClick={() => navigation.push(`/project/${group.id}`)}
+									class="p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
+								>
+									{group.name}
+								</li>
+							)}
+						</For>
+					</ul>
+				</Show>
+			</section>
 		</div>
 	);
 };

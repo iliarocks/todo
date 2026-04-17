@@ -3,6 +3,7 @@ import schema from "../instant.schema";
 import { Temporal } from "temporal-polyfill";
 import {
 	Item,
+	Project,
 	Vision,
 	serializeItem,
 	serializeItemUpdate,
@@ -22,22 +23,24 @@ export const createItem = (
 	item: Omit<Item, "id">,
 	user: User,
 	template?: Omit<Template, "id" | "reference">,
+	projectId?: string,
 ) => {
 	const itemId = id();
-	const itemChunk = db.tx.items[itemId].create(serializeItem(item)).link({ user: user.id });
+	let itemChunk = db.tx.items[itemId].create(serializeItem(item)).link({ user: user.id });
+	if (projectId) itemChunk = itemChunk.link({ project: projectId });
 
 	if (template) {
-		db.transact([
-			itemChunk,
-			db.tx.templates[id()]
-				.create(
-					serializeTemplate({
-						...template,
-						reference: template.mode === "absolute" ? item.date : undefined,
-					}),
-				)
-				.link({ user: user.id, instance: itemId }),
-		]);
+		let templateChunk = db.tx.templates[id()]
+			.create(
+				serializeTemplate({
+					...template,
+					reference: template.mode === "absolute" ? item.date : undefined,
+				}),
+			)
+			.link({ user: user.id, instance: itemId });
+		if (projectId) templateChunk = templateChunk.link({ project: projectId });
+
+		db.transact([itemChunk, templateChunk]);
 	} else {
 		db.transact(itemChunk);
 	}
@@ -54,25 +57,25 @@ export const updateTemplate = (
 	db.transact(db.tx.templates[template.id].update(serializeTemplateUpdate(update)));
 };
 
-export const deleteItem = (item: Item & { template?: Template }) => {
+export const deleteItem = (item: Item & { template?: Template }, projectId?: string) => {
 	if (!item.template) {
 		db.transact(db.tx.items[item.id].delete());
 		return;
 	}
 
 	const { template } = item;
-	db.transact(
-		db.tx.items[item.id].update(
-			serializeItemUpdate({
-				type: template.type,
-				text: template.text,
-				date: nextDate(item.date, template),
-				start: template.start,
-				end: template.end,
-				notes: template.notes,
-			}),
-		),
+	let chunk = db.tx.items[item.id].update(
+		serializeItemUpdate({
+			type: template.type,
+			text: template.text,
+			date: nextDate(item.date, template),
+			start: template.start,
+			end: template.end,
+			notes: template.notes,
+		}),
 	);
+	if (projectId) chunk = chunk.link({ project: projectId });
+	db.transact(chunk);
 };
 
 export const deleteTemplate = (template: Template) => {
@@ -85,6 +88,34 @@ export const createVision = (text: string, user: User) => {
 
 export const updateVision = (vision: Vision, text: string) => {
 	db.transact(db.tx.visions[vision.id].update({ text }));
+};
+
+export const createProject = (name: string, active: boolean, user: User) => {
+	db.transact(db.tx.projects[id()].create({ name, active }).link({ user: user.id }));
+};
+
+export const updateProject = (project: Project, update: { name?: string; notes?: string | null; active?: boolean }) => {
+	db.transact(db.tx.projects[project.id].update(update));
+};
+
+export const deleteProject = (project: Project) => {
+	db.transact(db.tx.projects[project.id].delete());
+};
+
+export const linkItemProject = (itemId: string, projectId: string) => {
+	db.transact(db.tx.items[itemId].link({ project: projectId }));
+};
+
+export const unlinkItemProject = (itemId: string, projectId: string) => {
+	db.transact(db.tx.items[itemId].unlink({ project: projectId }));
+};
+
+export const linkTemplateProject = (templateId: string, projectId: string) => {
+	db.transact(db.tx.templates[templateId].link({ project: projectId }));
+};
+
+export const unlinkTemplateProject = (templateId: string, projectId: string) => {
+	db.transact(db.tx.templates[templateId].unlink({ project: projectId }));
 };
 
 export const saveReminder = (

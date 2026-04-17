@@ -4,7 +4,7 @@ import { now, today } from "../library/date";
 import { Type, MODES, TYPES, Mode, Unit, Item } from "../library/types";
 import { useUser } from "../context/auth";
 import { useData } from "../context/data";
-import { DateInput, InlineInput, RepeatInputs, TimeInput, ToggleSelect } from "./Form";
+import { DateInput, InlineInput, ProjectSelect, RepeatInputs, TimeInput, ToggleSelect } from "./Form";
 import { between } from "../library/order";
 import { createItem } from "../library/db";
 import Button from "./Button";
@@ -14,6 +14,7 @@ import RichText from "./RichText";
 const Create: Component<{
 	open: boolean;
 	onClose: () => void;
+	projectId?: string;
 }> = (props) => {
 	const user = useUser();
 	const data = useData();
@@ -22,6 +23,7 @@ const Create: Component<{
 
 	createEffect(() => {
 		if (props.open) {
+			setForm("projectId", props.projectId);
 			requestAnimationFrame(() => textRef.focus());
 		}
 	});
@@ -29,7 +31,7 @@ const Create: Component<{
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 
-		const { type, text, notes, date, start, end, mode, unit, interval, anchor } = form;
+		const { type, text, notes, date, start, end, mode, unit, interval, anchor, projectId } = form;
 		const base = { type, text, notes, start, end };
 
 		const order = between(data.items().at(-1)?.order, undefined);
@@ -37,7 +39,7 @@ const Create: Component<{
 		const template =
 			mode && unit && interval ? { ...base, mode, unit, interval, anchor } : undefined;
 
-		createItem(item, user, template);
+		createItem(item, user, template, projectId);
 		setForm(buildForm({ type: "todo", date: today() }));
 		props.onClose();
 	};
@@ -81,6 +83,14 @@ const Create: Component<{
 					</div>
 				</section>
 				<section class="flex flex-col gap-xs">
+					<p class="text-xs text-[var(--secondary)]">PROJECT</p>
+					<ProjectSelect
+						projects={data.projects()}
+						selected={form.projectId}
+						onSelect={(projectId) => setForm({ projectId })}
+					/>
+				</section>
+				<section class="flex flex-col gap-xs">
 					<p class="text-xs text-[var(--secondary)]">REPEAT</p>
 					<RepeatInputs
 						modes={form.type === "event" ? MODES.slice(0, -1) : [...MODES]}
@@ -110,6 +120,7 @@ const buildForm = (props: Pick<Item, "type" | "date"> & Partial<Pick<Item, "text
 	interval: undefined as number | undefined,
 	unit: undefined as Unit | undefined,
 	anchor: undefined as number[] | undefined,
+	projectId: undefined as string | undefined,
 });
 
 export default Create;

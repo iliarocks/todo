@@ -2,7 +2,7 @@ import { Component, For, Show, splitProps } from "solid-js";
 import { JSX } from "solid-js";
 import { Temporal } from "temporal-polyfill";
 import { parseDate, parseTime, today } from "../library/date";
-import { Mode, Unit, UNITS } from "../library/types";
+import { Mode, Project, Unit, UNITS } from "../library/types";
 
 export const Input: Component<
 	Omit<JSX.InputHTMLAttributes<HTMLInputElement>, "value" | "onInput"> & {
@@ -147,6 +147,27 @@ export const RepeatInputs: Component<{
 				)}
 			</Show>
 		</div>
+	);
+};
+
+export const ProjectSelect: Component<{
+	projects: Project[];
+	selected: string | undefined;
+	onSelect: (id: string | undefined) => void;
+}> = (props) => {
+	return (
+		<select
+			class="p-s rounded-lg bg-[var(--surface)]"
+			value={props.selected ?? ""}
+			onChange={(e) => props.onSelect(e.currentTarget.value || undefined)}
+		>
+			<option value="">None</option>
+			<For each={props.projects}>
+				{(project) => (
+					<option value={project.id}>{project.name}</option>
+				)}
+			</For>
+		</select>
 	);
 };
 

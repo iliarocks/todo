@@ -1,14 +1,16 @@
 import { Component, Match, Show, Switch } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Item, MODES, Template } from "../library/types";
-import { deleteItem, deleteTemplate, updateItem, updateTemplate } from "../library/db";
-import { DateInput, RepeatInputs, TimeInput } from "./Form";
+import { Item, MODES, Project, Template } from "../library/types";
+import { deleteItem, deleteTemplate, linkItemProject, linkTemplateProject, unlinkItemProject, unlinkTemplateProject, updateItem, updateTemplate } from "../library/db";
+import { DateInput, ProjectSelect, RepeatInputs, TimeInput } from "./Form";
 import Button from "./Button";
 import Modal from "./Modal";
 
 const Edit: Component<{
 	item?: Item & { template?: Template };
 	template?: Template & { instance: Item };
+	projects: Project[];
+	projectId: string | undefined;
 	open: boolean;
 	onClose: () => void;
 }> = (props) => {
@@ -16,10 +18,24 @@ const Edit: Component<{
 		<Modal open={props.open} onClose={props.onClose}>
 			<Switch>
 				<Match when={props.template}>
-					{(t) => <EditTemplateForm template={t()} onClose={props.onClose} />}
+					{(t) => (
+						<EditTemplateForm
+							template={t()}
+							projects={props.projects}
+							projectId={props.projectId}
+							onClose={props.onClose}
+						/>
+					)}
 				</Match>
 				<Match when={props.item}>
-					{(i) => <EditItemForm item={i()} onClose={props.onClose} />}
+					{(i) => (
+						<EditItemForm
+							item={i()}
+							projects={props.projects}
+							projectId={props.projectId}
+							onClose={props.onClose}
+						/>
+					)}
 				</Match>
 			</Switch>
 		</Modal>
@@ -28,6 +44,8 @@ const Edit: Component<{
 
 const EditTemplateForm: Component<{
 	template: Template & { instance: Item };
+	projects: Project[];
+	projectId: string | undefined;
 	onClose: () => void;
 }> = (props) => {
 	const template = () => props.template;
@@ -38,6 +56,7 @@ const EditTemplateForm: Component<{
 		unit: template().unit,
 		interval: template().interval,
 		anchor: template().anchor,
+		projectId: props.projectId,
 	});
 
 	const handleSubmit = (e: SubmitEvent) => {
@@ -50,6 +69,17 @@ const EditTemplateForm: Component<{
 			interval: form.interval,
 			anchor: form.anchor,
 		});
+		if (form.projectId !== props.projectId) {
+			const instanceId = template().instance.id;
+			if (props.projectId) {
+				unlinkTemplateProject(template().id, props.projectId);
+				unlinkItemProject(instanceId, props.projectId);
+			}
+			if (form.projectId) {
+				linkTemplateProject(template().id, form.projectId);
+				linkItemProject(instanceId, form.projectId);
+			}
+		}
 		props.onClose();
 	};
 
@@ -72,6 +102,11 @@ const EditTemplateForm: Component<{
 					<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
 				</div>
 			</Show>
+			<ProjectSelect
+				projects={props.projects}
+				selected={form.projectId}
+				onSelect={(projectId) => setForm({ projectId })}
+			/>
 			<RepeatInputs
 				modes={template().type === "event" ? MODES.slice(0, -1) : [...MODES]}
 				mode={form.mode}
@@ -88,19 +123,27 @@ const EditTemplateForm: Component<{
 	);
 };
 
-const EditItemForm: Component<{ item: Item & { template?: Template }; onClose: () => void }> = (
-	props,
-) => {
+const EditItemForm: Component<{
+	item: Item & { template?: Template };
+	projects: Project[];
+	projectId: string | undefined;
+	onClose: () => void;
+}> = (props) => {
 	const item = () => props.item;
 	const [form, setForm] = createStore({
 		date: item().date,
 		start: item().start,
 		end: item().end,
+		projectId: props.projectId,
 	});
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 		updateItem(item(), { date: form.date, start: form.start, end: form.end });
+		if (form.projectId !== props.projectId) {
+			if (props.projectId) unlinkItemProject(item().id, props.projectId);
+			if (form.projectId) linkItemProject(item().id, form.projectId);
+		}
 		props.onClose();
 	};
 
@@ -124,6 +167,11 @@ const EditItemForm: Component<{ item: Item & { template?: Template }; onClose: (
 					<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
 				</Show>
 			</div>
+			<ProjectSelect
+				projects={props.projects}
+				selected={form.projectId}
+				onSelect={(projectId) => setForm({ projectId })}
+			/>
 		</form>
 	);
 };

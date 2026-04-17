@@ -17,11 +17,21 @@ export type PlainTime = Temporal.PlainTime;
 type DatabaseItem = InstaQLEntity<typeof schema, "items">;
 type DatabaseTemplate = InstaQLEntity<typeof schema, "templates">;
 type DatabaseVision = InstaQLEntity<typeof schema, "visions">;
+type DatabaseProject = InstaQLEntity<typeof schema, "projects">;
 
 export type Vision = {
 	id: string;
 	text: string;
 	reminder?: Item;
+};
+
+export type Project = {
+	id: string;
+	name: string;
+	notes?: string;
+	active: boolean;
+	items: Item[];
+	templates: (Template & { instance: Item })[];
 };
 
 export type Item = {
@@ -99,6 +109,20 @@ export const parseVision = (base: DatabaseVision & { reminder?: DatabaseItem }):
 	id: base.id,
 	text: base.text,
 	reminder: base.reminder ? parseItem(base.reminder) : undefined,
+});
+
+export const parseProject = (
+	base: DatabaseProject & { items?: DatabaseItem[]; templates?: (DatabaseTemplate & { instance?: DatabaseItem })[] },
+): Project => ({
+	id: base.id,
+	name: base.name,
+	notes: base.notes ?? undefined,
+	active: base.active,
+	items: (base.items ?? []).map(parseItem),
+	templates: (base.templates ?? []).flatMap((t) => {
+		const parsed = parseTemplateInstance(t);
+		return parsed ? [parsed] : [];
+	}),
 });
 
 export const serializeItem = (item: Omit<Item, "id">) => ({

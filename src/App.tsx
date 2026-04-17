@@ -6,6 +6,7 @@ import Layout from "./Layout";
 import Upcoming from "./pages/Upcoming";
 import Notes from "./pages/Notes";
 import Vision from "./pages/Vision";
+import Project from "./pages/Project";
 
 const App: Component = () => {
 	return (
@@ -13,6 +14,7 @@ const App: Component = () => {
 			<Route path="/" component={Today} />
 			<Route path="/upcoming" component={Upcoming} />
 			<Route path="/vision" component={Vision} />
+			<Route path="/project/:id" component={Project} />
 			<Route path="/notes/:id" component={Notes} />
 			<Route path="/menu" component={Navigation} />
 		</Router>

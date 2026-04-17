@@ -40,7 +40,6 @@ const _schema = i.schema({
 			name: i.string(),
 			notes: i.string().optional(),
 			active: i.boolean(),
-			order: i.string(),
 		}),
 	},
 	links: {
