@@ -42,7 +42,14 @@ const EditTemplateForm: Component<{
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
-		updateTemplate(template(), form);
+		updateTemplate(template(), {
+			start: form.start,
+			end: form.end,
+			mode: form.mode,
+			unit: form.unit,
+			interval: form.interval,
+			anchor: form.anchor,
+		});
 		props.onClose();
 	};
 
@@ -93,7 +100,7 @@ const EditItemForm: Component<{ item: Item & { template?: Template }; onClose: (
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
-		updateItem(item(), form);
+		updateItem(item(), { date: form.date, start: form.start, end: form.end });
 		props.onClose();
 	};
 

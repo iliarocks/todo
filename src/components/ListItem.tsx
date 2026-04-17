@@ -26,9 +26,10 @@ const ListItem: Component<{
 		>
 			<p>{item().text}</p>
 			<div class="flex gap-s items-center text-[var(--secondary)]">
-				<Show when={item().type === "event" && item().start && item().end}>
+				<Show when={item().type === "event" && item().start}>
 					<p class="text-[var(--secondary)] text-xs font-light">
-						{format(item().start!)} – {format(item().end!)}
+						{format(item().start!)}
+						<Show when={item().end}> – {format(item().end!)}</Show>
 					</p>
 				</Show>
 				<Show when={item().type === "todo" && !virtual()}>
