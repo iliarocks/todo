@@ -1,12 +1,10 @@
 import { Route, Router } from "@solidjs/router";
 import { Component } from "solid-js";
-import Create from "./pages/Create";
 import Today from "./pages/Today";
 import Navigation from "./pages/Navigation";
 import Layout from "./Layout";
 import Upcoming from "./pages/Upcoming";
 import Notes from "./pages/Notes";
-import Edit from "./pages/Edit";
 import Vision from "./pages/Vision";
 
 const App: Component = () => {
@@ -16,8 +14,6 @@ const App: Component = () => {
 			<Route path="/upcoming" component={Upcoming} />
 			<Route path="/vision" component={Vision} />
 			<Route path="/notes/:id" component={Notes} />
-			<Route path="/edit/:id" component={Edit} />
-			<Route path="/create" component={Create} />
 			<Route path="/menu" component={Navigation} />
 		</Router>
 	);

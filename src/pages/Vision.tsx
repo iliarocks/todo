@@ -1,57 +1,20 @@
-import { type Component, createEffect, onCleanup, onMount } from "solid-js";
+import { type Component } from "solid-js";
 import { Temporal } from "temporal-polyfill";
-import { Editor } from "@tiptap/core";
-import StarterKit from "@tiptap/starter-kit";
 import { useUser } from "../context/auth";
 import { useData } from "../context/data";
 import { createVision, updateVision, saveReminder } from "../library/db";
 import { DateInput } from "../components/Form";
 import { between } from "../library/order";
+import RichText from "../components/RichText";
 
 const Vision: Component = () => {
 	const user = useUser();
 	const data = useData();
 
-	let ref!: HTMLDivElement;
-	let editor: Editor;
-
-	onMount(() => {
-		editor = new Editor({
-			element: ref,
-			extensions: [
-				StarterKit.configure({
-					blockquote: false,
-					code: false,
-					codeBlock: false,
-					heading: false,
-					horizontalRule: false,
-					strike: false,
-				}),
-			],
-			editorProps: {
-				attributes: {
-					class: "p-s rounded-lg bg-[var(--surface)] outline-none",
-				},
-			},
-			onUpdate: ({ editor }) => {
-				saveText(editor.getHTML());
-			},
-		});
-	});
-
-	onCleanup(() => editor?.destroy());
-
-	createEffect(() => {
-		const vision = data.vision();
-		if (vision && editor && !editor.isFocused) {
-			editor.commands.setContent(vision.text);
-		}
-	});
-
-	const saveText = (text: string) => {
+	const saveText = (text: string | undefined) => {
 		const vision = data.vision();
 		if (vision) {
-			updateVision(vision, text);
+			updateVision(vision, text ?? "");
 		} else if (text) {
 			createVision(text, user);
 		}
@@ -73,7 +36,11 @@ const Vision: Component = () => {
 					setDate={saveHorizon}
 				/>
 			</section>
-			<div ref={ref} />
+			<RichText
+				placeholder="Write your vision..."
+				value={data.vision()?.text}
+				onInput={saveText}
+			/>
 		</div>
 	);
 };

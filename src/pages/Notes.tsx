@@ -1,28 +1,57 @@
 import { useParams } from "@solidjs/router";
-import { type Component, Show } from "solid-js";
-import Button from "../components/Button";
-import { marked } from "marked";
+import { type Component, createSignal, Show } from "solid-js";
 import { useData } from "../context/data";
-import { useNavigation } from "../library/navigation";
+import { updateItem, updateTemplate } from "../library/db";
+import { InlineInput } from "../components/Form";
+import RichText from "../components/RichText";
+import Edit from "../components/Edit";
+import Button from "../components/Button";
 
 const Notes: Component = () => {
 	const params = useParams<{ id: string }>();
-	const navigation = useNavigation();
 	const data = useData();
+	const [editOpen, setEditOpen] = createSignal(false);
+
 	const template = () => data.templates().find((t) => t.id === params.id);
 	const item = () => data.items().find((i) => i.id === params.id);
+	const entry = () => template() ?? item();
+
+	const saveText = (text: string) => {
+		const t = template();
+		const i = item();
+		if (t) updateTemplate(t, { text });
+		else if (i) updateItem(i, { text });
+	};
+
+	const saveNotes = (notes: string | undefined) => {
+		const t = template();
+		const i = item();
+		if (t) updateTemplate(t, { notes });
+		else if (i) updateItem(i, { notes });
+	};
 
 	return (
-		<Show when={template() || item()}>
+		<Show when={entry()}>
 			{(data) => (
 				<div class="flex flex-col gap-m h-full justify-center">
 					<section class="flex justify-between text-[var(--secondary)]">
-						<h1>{data().text}</h1>
-						<Button onClick={() => navigation.replace(`/edit/${params.id}`)}>Edit</Button>
+						<InlineInput
+							type="text"
+							value={data().text}
+							onInput={(text) => text && saveText(text)}
+						/>
+						<Button onClick={() => setEditOpen(true)}>Edit</Button>
 					</section>
-					<Show when={data().notes}>
-						{(notes) => <div innerHTML={marked.parse(notes()) as string} />}
-					</Show>
+					<RichText
+						value={data().notes}
+						onInput={saveNotes}
+					/>
+					<Edit
+						item={item()}
+						template={template()}
+						open={editOpen()}
+						onClose={() => setEditOpen(false)}
+					/>
 				</div>
 			)}
 		</Show>

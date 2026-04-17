@@ -57,6 +57,14 @@ body {
   padding-left: 1.5em;
 }
 
+.tiptap .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--secondary);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;

@@ -22,8 +22,8 @@ export const Input: Component<
 	);
 };
 
-export const TextArea: Component<
-	Omit<JSX.TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "onInput"> & {
+export const InlineInput: Component<
+	Omit<JSX.InputHTMLAttributes<HTMLInputElement>, "value" | "onInput"> & {
 		value: string | undefined;
 		onInput: (value: string | undefined) => void;
 	}
@@ -31,9 +31,9 @@ export const TextArea: Component<
 	const [local, others] = splitProps(props, ["value", "onInput"]);
 
 	return (
-		<textarea
+		<input
 			{...others}
-			class="p-s rounded-lg bg-[var(--surface)] resize-none field-sizing-content"
+			class="outline-none bg-transparent w-full"
 			value={local.value ?? ""}
 			onInput={(e) => local.onInput(e.currentTarget.value || undefined)}
 		/>

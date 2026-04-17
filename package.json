@@ -22,9 +22,9 @@
     "@instantdb/solidjs": "latest",
     "@solidjs/router": "^0.15.4",
     "@tiptap/core": "^3.22.3",
+    "@tiptap/extension-placeholder": "^3.22.3",
     "@tiptap/starter-kit": "^3.22.3",
     "@vercel/analytics": "^2.0.0",
-    "marked": "^17.0.4",
     "solid-js": "^1.9.9",
     "solid-transition-group": "^0.3.0",
     "temporal-polyfill": "^0.3.2"
