@@ -3,8 +3,7 @@ import { type Component, createSignal, Show } from "solid-js";
 import { useData } from "../context/data";
 import { updateItem, updateTemplate } from "../library/db";
 import { useNavigation } from "../library/navigation";
-import { InlineInput } from "../components/Form";
-import RichText from "../components/RichText";
+import { Input, RichText } from "../components/Form";
 import Edit from "../components/Edit";
 import Button from "../components/Button";
 
@@ -17,11 +16,7 @@ const Notes: Component = () => {
 	const template = () => data.templates().find((t) => t.id === params.id);
 	const item = () => data.items().find((i) => i.id === params.id);
 	const entry = () => template() ?? item();
-	const project = () =>
-		data.projects().find((p) =>
-			p.items.some((i) => i.id === params.id) ||
-			p.templates.some((t) => t.id === params.id),
-		);
+	const project = () => template()?.project ?? item()?.project;
 
 	const saveText = (text: string) => {
 		const t = template();
@@ -41,35 +36,26 @@ const Notes: Component = () => {
 		<Show when={entry()}>
 			{(entry) => (
 				<div class="flex flex-col gap-m h-full justify-center">
-					<section class="flex justify-between text-[var(--secondary)]">
-						<InlineInput
+					<section class="flex justify-between gap-m text-[var(--secondary)]">
+						<Input
 							type="text"
 							value={entry().text}
 							onInput={(text) => text && saveText(text)}
+							class="w-full"
 						/>
 						<div class="flex gap-s items-center shrink-0">
 							<Show when={project()}>
 								{(p) => (
-									<Button onClick={() => navigation.push(`/project/${p().id}`)}>
-										{p().name}
-									</Button>
+									<Button onClick={() => navigation.push(`/project/${p().id}`)}>{p().name}</Button>
 								)}
 							</Show>
 							<Button onClick={() => setEditOpen(true)}>Edit</Button>
 						</div>
 					</section>
-					<RichText
-						value={entry().notes}
-						onInput={saveNotes}
-					/>
-					<Edit
-						item={item()}
-						template={template()}
-						projects={data.projects()}
-						projectId={project()?.id}
-						open={editOpen()}
-						onClose={() => setEditOpen(false)}
-					/>
+					<RichText value={entry().notes} onInput={saveNotes} />
+					<Show when={editOpen()}>
+						<Edit item={item()} template={template()} onClose={() => setEditOpen(false)} />
+					</Show>
 				</div>
 			)}
 		</Show>

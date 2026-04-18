@@ -1,7 +1,6 @@
-import { type Component, createSignal, Match, Switch } from "solid-js";
+import { type Component, createSignal, Match, Switch, JSX } from "solid-js";
 import { db } from "../library/db";
 import Button from "../components/Button";
-import { Input } from "../components/Form";
 
 const Login: Component = () => {
 	const [step, setStep] = createSignal<"email" | "code">("email");
@@ -29,7 +28,7 @@ const Login: Component = () => {
 							type="email"
 							placeholder="Email"
 							value={email()}
-							onInput={(email) => email && setEmail(email)}
+							onInput={(e) => setEmail(e.currentTarget.value)}
 							required
 						/>
 						<Button type="submit">Send code</Button>
@@ -42,7 +41,7 @@ const Login: Component = () => {
 							type="text"
 							placeholder="Code"
 							value={code()}
-							onInput={(code) => code && setCode(code)}
+							onInput={(e) => setCode(e.currentTarget.value)}
 							required
 						/>
 						<Button type="submit">Sign in</Button>
@@ -51,6 +50,10 @@ const Login: Component = () => {
 			</Switch>
 		</main>
 	);
+};
+
+const Input: Component<JSX.InputHTMLAttributes<HTMLInputElement>> = (props) => {
+	return <input {...props} class="p-s rounded-lg bg-[var(--surface)]" />;
 };
 
 export default Login;

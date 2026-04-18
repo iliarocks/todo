@@ -45,7 +45,10 @@ const nextMonthDate = (
 	return nextStart.with({ day: Math.min(anchor[0] + 1, nextStart.daysInMonth) });
 };
 
-export const nextDate = (date: Temporal.PlainDate, template: Template): Temporal.PlainDate => {
+export const nextDate = (
+	date: Temporal.PlainDate,
+	template: Omit<Template, "instance" | "project">,
+): Temporal.PlainDate => {
 	if (template.mode === "relative" || template.unit === "day") {
 		return advanceDate(date, template.interval, template.unit);
 	}
@@ -59,7 +62,7 @@ export const nextDate = (date: Temporal.PlainDate, template: Template): Temporal
 	return nextMonthDate(date, reference!, interval, anchor!);
 };
 
-const toVirtualItem = (template: Template & { instance: Item }, date: Temporal.PlainDate): Item => ({
+const toVirtualItem = (template: Template, date: Temporal.PlainDate): Item => ({
 	id: template.id,
 	type: template.type,
 	text: template.text,
@@ -71,7 +74,7 @@ const toVirtualItem = (template: Template & { instance: Item }, date: Temporal.P
 });
 
 export const generateVirtualItems = (
-	template: Template & { instance: Item },
+	template: Template,
 	after: Temporal.PlainDate,
 	until: Temporal.PlainDate,
 ): Item[] => {

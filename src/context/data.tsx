@@ -1,14 +1,21 @@
 import { Accessor, createContext, createEffect, ParentComponent, useContext } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
-import { Item, parseItemTemplate, parseProject, parseTemplateInstance, parseVision, Project, Template, Vision } from "../library/types";
+import {
+	Item,
+	parseItem,
+	parseProject,
+	parseTemplate,
+	parseVision,
+	Project,
+	Template,
+	Vision,
+} from "../library/types";
 import { useUser } from "./auth";
 import { db } from "../library/db";
 
-type Items = (Item & { template?: Template })[];
-type Templates = (Template & { instance: Item })[];
 type Data = {
-	items: Accessor<Items>;
-	templates: Accessor<Templates>;
+	items: Accessor<Item[]>;
+	templates: Accessor<Template[]>;
 	vision: Accessor<Vision | undefined>;
 	projects: Accessor<Project[]>;
 };
@@ -18,30 +25,34 @@ const DataContext = createContext<Data>();
 export const DataProvider: ParentComponent = (props) => {
 	const user = useUser();
 	const state = db.useQuery({
-		items: { $: { where: { "user.id": user.id }, order: { order: "asc" } }, template: {} },
-		templates: { $: { where: { "user.id": user.id } }, instance: {} },
+		items: {
+			$: { where: { "user.id": user.id }, order: { order: "asc" } },
+			template: {},
+			project: {},
+		},
+		templates: { $: { where: { "user.id": user.id } }, instance: {}, project: {} },
 		visions: { $: { where: { "user.id": user.id } }, reminder: {} },
-		projects: { $: { where: { "user.id": user.id } }, items: {}, templates: { instance: {} } },
+		projects: {
+			$: { where: { "user.id": user.id } },
+			items: {},
+			templates: { instance: {} },
+		},
 	});
 
 	const [store, setStore] = createStore({
-		items: [] as Items,
-		templates: [] as Templates,
+		items: [] as Item[],
+		templates: [] as Template[],
 		vision: undefined as Vision | undefined,
 		projects: [] as Project[],
 	});
 
 	createEffect(() => {
-		setStore("items", reconcile((state().data?.items ?? []).map(parseItemTemplate)));
+		setStore("items", reconcile((state().data?.items ?? []).map(parseItem)));
 		setStore(
 			"templates",
 			reconcile(
-				(state().data?.templates ?? []).flatMap((t) => {
-					const parsed = parseTemplateInstance(t);
-					return parsed ? [parsed] : [];
-				}),
-			),
-		);
+				(state().data?.templates ?? []).map(parseTemplate).filter((t) => t !== undefined)))
+
 		const v = state().data?.visions?.[0];
 		setStore("vision", v ? parseVision(v) : undefined);
 		setStore("projects", reconcile((state().data?.projects ?? []).map(parseProject)));

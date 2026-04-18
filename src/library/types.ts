@@ -11,47 +11,29 @@ export type Type = (typeof TYPES)[number];
 export type Mode = (typeof MODES)[number];
 export type Unit = (typeof UNITS)[number];
 
-export type PlainDate = Temporal.PlainDate;
-export type PlainTime = Temporal.PlainTime;
-
 type DatabaseItem = InstaQLEntity<typeof schema, "items">;
 type DatabaseTemplate = InstaQLEntity<typeof schema, "templates">;
-type DatabaseVision = InstaQLEntity<typeof schema, "visions">;
 type DatabaseProject = InstaQLEntity<typeof schema, "projects">;
+type DatabaseVision = InstaQLEntity<typeof schema, "visions">;
 
-export type Vision = {
-	id: string;
-	text: string;
-	reminder?: Item;
-};
-
-export type Project = {
-	id: string;
-	name: string;
-	notes?: string;
-	active: boolean;
-	items: Item[];
-	templates: (Template & { instance: Item })[];
-};
-
-export type Item = {
+type BaseItem = {
 	id: string;
 	type: Type;
 	text: string;
-	date: PlainDate;
+	date: Temporal.PlainDate;
 	notes?: string;
-	start?: PlainTime;
-	end?: PlainTime;
+	start?: Temporal.PlainTime;
+	end?: Temporal.PlainTime;
 	order: string;
 };
 
-export type Template = {
+type BaseTemplate = {
 	id: string;
 	type: Type;
 	text: string;
 	notes?: string;
-	start?: PlainTime;
-	end?: PlainTime;
+	start?: Temporal.PlainTime;
+	end?: Temporal.PlainTime;
 	mode: Mode;
 	unit: Unit;
 	interval: number;
@@ -59,80 +41,94 @@ export type Template = {
 	reference?: Temporal.PlainDate;
 };
 
-const parseItem = (base: DatabaseItem): Item => {
-	const { type, date, start, end } = base;
-
-	return {
-		...base,
-		type: type as Type,
-		date: parseDate(date),
-		start: start ? parseTime(start) : undefined,
-		end: end ? parseTime(end) : undefined,
-	};
+export type Item = BaseItem & {
+	template?: BaseTemplate;
+	project?: DatabaseProject;
 };
 
-const parseTemplate = (base: DatabaseTemplate): Template => {
-	const { type, start, end, mode, unit, reference } = base;
-
-	return {
-		...base,
-		type: type as Type,
-		start: start ? parseTime(start) : undefined,
-		end: end ? parseTime(end) : undefined,
-		mode: mode as Mode,
-		unit: unit as Unit,
-		reference: reference ? parseDate(reference) : undefined,
-	};
+export type Template = BaseTemplate & {
+	instance: Item;
+	project?: DatabaseProject;
 };
 
-export const parseItemTemplate = (base: DatabaseItem & { template?: DatabaseTemplate }) => {
-	const { template } = base;
-
-	return {
-		...parseItem(base),
-		template: template ? parseTemplate(template) : undefined,
-	};
+export type Project = DatabaseProject & {
+	items: Item[];
+	templates: Template[];
 };
 
-export const parseTemplateInstance = (base: DatabaseTemplate & { instance?: DatabaseItem }) => {
-	const { instance } = base;
+export type Vision = {
+	id: string;
+	text: string;
+	reminder?: Item;
+};
 
-	if (instance === undefined) return null;
+const parseBaseItem = (base: DatabaseItem): BaseItem => ({
+	...base,
+	type: base.type as Type,
+	date: parseDate(base.date),
+	start: base.start ? parseTime(base.start) : undefined,
+	end: base.end ? parseTime(base.end) : undefined,
+});
+
+const parseBaseTemplate = (base: DatabaseTemplate): BaseTemplate => ({
+	...base,
+	type: base.type as Type,
+	start: base.start ? parseTime(base.start) : undefined,
+	end: base.end ? parseTime(base.end) : undefined,
+	mode: base.mode as Mode,
+	unit: base.unit as Unit,
+	reference: base.reference ? parseDate(base.reference) : undefined,
+});
+
+export const parseItem = (
+	base: DatabaseItem & { template?: DatabaseTemplate; project?: DatabaseProject },
+): Item => ({
+	...parseBaseItem(base),
+	template: base.template ? parseBaseTemplate(base.template) : undefined,
+	project: base.project,
+});
+
+export const parseTemplate = (
+	base: DatabaseTemplate & {
+		instance?: DatabaseItem;
+		project?: DatabaseProject;
+	},
+): Template | undefined => {
+	if (base.instance === undefined) return undefined;
 
 	return {
-		...parseTemplate(base),
-		instance: parseItem(instance),
+		...parseBaseTemplate(base),
+		instance: parseBaseItem(base.instance),
+		project: base.project,
 	};
 };
 
 export const parseVision = (base: DatabaseVision & { reminder?: DatabaseItem }): Vision => ({
-	id: base.id,
-	text: base.text,
+	...base,
 	reminder: base.reminder ? parseItem(base.reminder) : undefined,
 });
 
 export const parseProject = (
-	base: DatabaseProject & { items?: DatabaseItem[]; templates?: (DatabaseTemplate & { instance?: DatabaseItem })[] },
-): Project => ({
-	id: base.id,
-	name: base.name,
-	notes: base.notes ?? undefined,
-	active: base.active,
-	items: (base.items ?? []).map(parseItem),
-	templates: (base.templates ?? []).flatMap((t) => {
-		const parsed = parseTemplateInstance(t);
-		return parsed ? [parsed] : [];
-	}),
-});
+	base: DatabaseProject & {
+		items?: DatabaseItem[];
+		templates?: DatabaseTemplate[];
+	},
+): Project => {
+	return {
+		...base,
+		items: (base.items ?? []).map((i) => parseItem(i)),
+		templates: (base.templates ?? []).map(parseTemplate).filter((t) => t !== undefined),
+	};
+};
 
-export const serializeItem = (item: Omit<Item, "id">) => ({
+export const serializeItem = (item: Omit<BaseItem, "id">) => ({
 	...item,
 	date: item.date.toString(),
 	start: item.start?.toString(),
 	end: item.end?.toString(),
 });
 
-export const serializeItemUpdate = (update: Partial<Omit<Item, "id">>) => {
+export const serializeItemUpdate = (update: Partial<Omit<BaseItem, "id">>) => {
 	const output: Record<string, unknown> = {};
 	if ("type" in update) output.type = update.type;
 	if ("text" in update) output.text = update.text;
@@ -144,7 +140,7 @@ export const serializeItemUpdate = (update: Partial<Omit<Item, "id">>) => {
 	return output;
 };
 
-export const serializeTemplate = (template: Omit<Template, "id">) => ({
+export const serializeTemplate = (template: Omit<BaseTemplate, "id">) => ({
 	...template,
 	start: template.start?.toString(),
 	end: template.end?.toString(),
@@ -152,7 +148,7 @@ export const serializeTemplate = (template: Omit<Template, "id">) => ({
 	anchor: template.anchor ? [...template.anchor] : undefined,
 });
 
-export const serializeTemplateUpdate = (update: Partial<Omit<Template, "id">>) => {
+export const serializeTemplateUpdate = (update: Partial<Omit<BaseTemplate, "id">>) => {
 	const output: Record<string, unknown> = {};
 	if ("type" in update) output.type = update.type;
 	if ("text" in update) output.text = update.text;

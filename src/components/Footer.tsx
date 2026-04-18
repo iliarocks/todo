@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "@solidjs/router";
+import { useLocation } from "@solidjs/router";
 import { createSignal } from "solid-js";
 import { useNavigation } from "../library/navigation";
 import IconButton from "./IconButton";
@@ -9,15 +9,12 @@ import Create from "./Create";
 
 const Footer = () => {
 	const location = useLocation();
-	const params = useParams();
 	const navigation = useNavigation();
 	const [createOpen, setCreateOpen] = createSignal(false);
 
 	const isProject = () => location.pathname.startsWith("/project/");
 	const showClose = () =>
-		location.pathname === "/menu" ||
-		location.pathname.startsWith("/notes/") ||
-		isProject();
+		location.pathname === "/menu" || location.pathname.startsWith("/notes/") || isProject();
 
 	return (
 		<>
@@ -41,11 +38,9 @@ const Footer = () => {
 					</Show>
 				</Transition>
 			</div>
-			<Create
-				open={createOpen()}
-				onClose={() => setCreateOpen(false)}
-				projectId={isProject() ? params.id : undefined}
-			/>
+			<Show when={createOpen()}>
+				<Create onClose={() => setCreateOpen(false)} />
+			</Show>
 		</>
 	);
 };

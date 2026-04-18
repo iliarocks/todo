@@ -4,9 +4,8 @@ import { useUser } from "../context/auth";
 import { useData } from "../context/data";
 import { createProject, createVision, updateVision, saveReminder } from "../library/db";
 import { useNavigation } from "../library/navigation";
-import { DateInput } from "../components/Form";
+import { DateInput, RichText } from "../components/Form";
 import { between } from "../library/order";
-import RichText from "../components/RichText";
 import IconButton from "../components/IconButton";
 
 const Vision: Component = () => {
@@ -34,19 +33,15 @@ const Vision: Component = () => {
 	};
 
 	return (
-		<div class="flex flex-col gap-m">
+		<div class="flex flex-col gap-l">
 			<section class="flex justify-between items-center">
 				<h1 class="text-xs text-[var(--secondary)]">VISION</h1>
-				<DateInput
-					date={data.vision()?.reminder?.date}
-					setDate={saveHorizon}
-				/>
+				<section class="flex gap-xs">
+					<p class="text-[var(--secondary)]">Horizon</p>
+					<DateInput date={data.vision()?.reminder?.date} setDate={saveHorizon} />
+				</section>
 			</section>
-			<RichText
-				placeholder="Write your vision..."
-				value={data.vision()?.text}
-				onInput={saveText}
-			/>
+			<RichText placeholder="Write your vision..." value={data.vision()?.text} onInput={saveText} />
 			<section class="flex flex-col gap-xs">
 				<div class="flex justify-between items-center">
 					<h2 class="text-xs text-[var(--secondary)]">PROJECTS</h2>
@@ -60,7 +55,7 @@ const Vision: Component = () => {
 							{(project) => (
 								<li
 									onClick={() => navigation.push(`/project/${project.id}`)}
-									class="p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
+									class="py-xs cursor-pointer active:text-[var(--secondary)]"
 								>
 									{project.name}
 								</li>
@@ -82,7 +77,7 @@ const Vision: Component = () => {
 							{(group) => (
 								<li
 									onClick={() => navigation.push(`/project/${group.id}`)}
-									class="p-xs rounded-md cursor-pointer active:bg-[var(--accent)]"
+									class="py-xs cursor-pointer active:text-[var(--secondary)]"
 								>
 									{group.name}
 								</li>

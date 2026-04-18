@@ -1,32 +1,30 @@
-import { createEffect, Show, type Component } from "solid-js";
+import { Show, type Component } from "solid-js";
 import { createStore } from "solid-js/store";
 import { now, today } from "../library/date";
-import { Type, MODES, TYPES, Mode, Unit, Item } from "../library/types";
+import { Type, MODES, TYPES, Mode, Unit, Item, Project } from "../library/types";
 import { useUser } from "../context/auth";
 import { useData } from "../context/data";
-import { DateInput, InlineInput, ProjectSelect, RepeatInputs, TimeInput, ToggleSelect } from "./Form";
+import {
+	DateInput,
+	Input,
+	ProjectSelect,
+	RepeatInputs,
+	RepeatToggle,
+	RichText,
+	TimeInput,
+	ToggleSelect,
+} from "./Form";
 import { between } from "../library/order";
 import { createItem } from "../library/db";
 import Button from "./Button";
 import Modal from "./Modal";
-import RichText from "./RichText";
 
 const Create: Component<{
-	open: boolean;
 	onClose: () => void;
-	projectId?: string;
 }> = (props) => {
 	const user = useUser();
 	const data = useData();
 	const [form, setForm] = createStore(buildForm({ type: "todo", date: today() }));
-	let textRef!: HTMLInputElement;
-
-	createEffect(() => {
-		if (props.open) {
-			setForm("projectId", props.projectId);
-			requestAnimationFrame(() => textRef.focus());
-		}
-	});
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
@@ -38,78 +36,96 @@ const Create: Component<{
 		const item = { ...base, date, order };
 		const template =
 			mode && unit && interval ? { ...base, mode, unit, interval, anchor } : undefined;
+		const project = projectId ? { id: projectId } : undefined;
 
-		createItem(item, user, template, projectId);
-		setForm(buildForm({ type: "todo", date: today() }));
+		createItem(item, user, template, project);
+		clear();
 		props.onClose();
 	};
 
-	const resetForm = (type: Type) =>
-		setForm(buildForm({ type, date: form.date, text: form.text, notes: form.notes }));
+	const selectType = (type: Type) =>
+		setForm(
+			buildForm({
+				type,
+				date: form.date,
+				text: form.text,
+				notes: form.notes,
+				projectId: form.projectId,
+			}),
+		);
+
+	const clear = () => setForm(buildForm({ type: "todo", date: today() }));
+
+	const onClose = () => {
+		clear();
+		props.onClose();
+	};
+
+	const toggleRepeat = () => {
+		if (form.mode) {
+			setForm({ mode: undefined, interval: undefined, unit: undefined, anchor: undefined });
+		} else {
+			setForm({ mode: "absolute", unit: "day", interval: 1, anchor: [] });
+		}
+	};
 
 	return (
-		<Modal open={props.open} onClose={props.onClose}>
-			<form onSubmit={handleSubmit} class="flex flex-col gap-s">
+		<Modal onClose={onClose}>
+			<form onSubmit={handleSubmit} class="flex flex-col gap-m">
 				<section class="flex justify-between items-center">
 					<ToggleSelect
 						options={TYPES}
 						selected={TYPES.indexOf(form.type)}
-						onSelect={(i) => resetForm(TYPES[i])}
-						single
+						onSelect={(i) => selectType(TYPES[i])}
 					/>
 					<Button type="submit">Save</Button>
 				</section>
-				<InlineInput
-					ref={textRef}
+				<Input
 					type="text"
-					placeholder="Text"
+					placeholder="Title"
 					value={form.text}
 					onInput={(text) => setForm({ text: text ?? "" })}
+					class="text-lg font-medium"
 					required
 				/>
-				<RichText
-					placeholder="Notes"
-					value={form.notes}
-					onInput={(notes) => setForm({ notes })}
-				/>
-				<section class="flex flex-col gap-xs">
-					<p class="text-xs text-[var(--secondary)]">WHEN</p>
-					<div class="flex gap-xs">
-						<DateInput date={form.date} setDate={(date) => setForm({ date })} />
+				<RichText placeholder="Notes" value={form.notes} onInput={(notes) => setForm({ notes })} />
+				<hr class="text-[var(--border)]" />
+				<section class="flex gap-m overflow-x-auto">
+					<section class="flex gap-xs shrink-0">
+						<DateInput date={form.date} setDate={(date) => date && setForm({ date })} />
 						<Show when={form.type === "event"}>
-							<TimeInput time={form.start} setTime={(start) => setForm({ start })} />
-							<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
+							<TimeInput time={form.start!} setTime={(start) => setForm({ start })} />
+							<TimeInput time={form.end!} setTime={(end) => setForm({ end })} />
 						</Show>
-					</div>
+					</section>
+					<section class="flex gap-m shrink-0 ml-auto">
+						<RepeatToggle mode={form.mode} onClick={() => toggleRepeat()} />
+						<ProjectSelect
+							projects={data.projects()}
+							selected={form.projectId}
+							onSelect={(projectId) => setForm({ projectId })}
+						/>
+					</section>
 				</section>
-				<section class="flex flex-col gap-xs">
-					<p class="text-xs text-[var(--secondary)]">PROJECT</p>
-					<ProjectSelect
-						projects={data.projects()}
-						selected={form.projectId}
-						onSelect={(projectId) => setForm({ projectId })}
-					/>
-				</section>
-				<section class="flex flex-col gap-xs">
-					<p class="text-xs text-[var(--secondary)]">REPEAT</p>
+				<Show when={form.mode && form.interval && form.unit && form.anchor}>
 					<RepeatInputs
 						modes={form.type === "event" ? MODES.slice(0, -1) : [...MODES]}
-						mode={form.mode}
-						interval={form.interval}
-						unit={form.unit}
-						anchor={form.anchor}
-						setMode={(mode) => setForm({ mode })}
-						setInterval={(interval) => setForm({ interval })}
-						setUnit={(unit) => setForm({ unit })}
-						setAnchor={(anchor) => setForm({ anchor })}
+						mode={form.mode!}
+						interval={form.interval!}
+						unit={form.unit!}
+						anchor={form.anchor!}
+						onChange={(update) => setForm(update)}
 					/>
-				</section>
+				</Show>
 			</form>
 		</Modal>
 	);
 };
 
-const buildForm = (props: Pick<Item, "type" | "date"> & Partial<Pick<Item, "text" | "notes">>) => ({
+const buildForm = (
+	props: Pick<Item, "type" | "date"> &
+		Partial<Pick<Item, "text" | "notes">> & { projectId?: string },
+) => ({
 	type: props.type,
 	text: props.text ?? "",
 	notes: props.notes,
@@ -120,7 +136,7 @@ const buildForm = (props: Pick<Item, "type" | "date"> & Partial<Pick<Item, "text
 	interval: undefined as number | undefined,
 	unit: undefined as Unit | undefined,
 	anchor: undefined as number[] | undefined,
-	projectId: undefined as string | undefined,
+	projectId: props.projectId,
 });
 
 export default Create;

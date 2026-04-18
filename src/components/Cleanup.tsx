@@ -22,14 +22,7 @@ const Cleanup: Component = () => {
 			for (const item of items) {
 				if (isExpired(item)) {
 					if (item.type === "todo") updateItem(item, { date: today() });
-
-					if (item.type === "event") {
-						const projectId = data.projects().find((p) =>
-							p.items.some((i) => i.id === item.id) ||
-							p.templates.some((t) => t.id === item.template?.id),
-						)?.id;
-						deleteItem(item, projectId);
-					}
+					if (item.type === "event") deleteItem(item);
 				}
 			}
 		}),

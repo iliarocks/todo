@@ -3,8 +3,7 @@ import { type Component, createSignal, For, Show } from "solid-js";
 import { useData } from "../context/data";
 import { deleteProject, updateProject } from "../library/db";
 import { useNavigation } from "../library/navigation";
-import { InlineInput } from "../components/Form";
-import RichText from "../components/RichText";
+import { Input, RichText } from "../components/Form";
 import ListItem from "../components/ListItem";
 import Button from "../components/Button";
 
@@ -14,6 +13,15 @@ const Project: Component = () => {
 	const navigation = useNavigation();
 
 	const project = () => data.projects().find((p) => p.id === params.id);
+
+	const entries = () => {
+		const p = project();
+		if (!p) return [];
+		return [
+			...p.items.map((item) => ({ item, virtual: false })),
+			...p.templates.map((t) => ({ item: { ...t.instance, text: t.text }, virtual: true })),
+		].sort((a, b) => a.item.order.localeCompare(b.item.order));
+	};
 
 	const saveName = (name: string) => {
 		const p = project();
@@ -43,7 +51,7 @@ const Project: Component = () => {
 			{(p) => (
 				<div class="flex flex-col gap-m">
 					<section class="flex justify-between items-center text-[var(--secondary)]">
-						<InlineInput
+						<Input
 							type="text"
 							value={p().name}
 							onInput={(text) => text && saveName(text)}
@@ -60,18 +68,12 @@ const Project: Component = () => {
 						value={p().notes}
 						onInput={saveNotes}
 					/>
-					<Show when={p().items.length > 0 || p().templates.length > 0}>
-						<section class="flex flex-col gap-xs">
-							<h2 class="text-xs text-[var(--secondary)]">ITEMS</h2>
-							<ul class="flex flex-col">
-								<For each={p().items}>
-									{(item) => <ListItem item={item} />}
-								</For>
-								<For each={p().templates}>
-									{(template) => <ListItem item={template.instance} virtual />}
-								</For>
-							</ul>
-						</section>
+					<Show when={entries().length > 0}>
+						<ul class="flex flex-col">
+							<For each={entries()}>
+								{(entry) => <ListItem item={entry.item} virtual={entry.virtual} />}
+							</For>
+						</ul>
 					</Show>
 				</div>
 			)}

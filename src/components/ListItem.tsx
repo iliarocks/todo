@@ -1,29 +1,22 @@
 import { Temporal } from "temporal-polyfill";
 import { Component, Show } from "solid-js";
-import { Item, Template } from "../library/types";
+import { Item } from "../library/types";
 import Icon from "./Icon";
 import IconButton from "./IconButton";
 import { useNavigation } from "../library/navigation";
-import { useData } from "../context/data";
 import { deleteItem } from "../library/db";
 
 const format = (t: Temporal.PlainTime) =>
 	t.round({ smallestUnit: "minute" }).toString().slice(0, 5);
 
 const ListItem: Component<{
-	item: Item & { template?: Template };
+	item: Item;
 	virtual?: boolean;
 	onPointerDown?: (e: PointerEvent) => void;
 }> = (props) => {
 	const navigation = useNavigation();
-	const data = useData();
 	const item = () => props.item;
 	const virtual = () => props.virtual ?? false;
-	const projectId = () =>
-		data.projects().find((p) =>
-			p.items.some((i) => i.id === item().id) ||
-			p.templates.some((t) => t.id === item().template?.id),
-		)?.id;
 
 	return (
 		<li
@@ -44,7 +37,7 @@ const ListItem: Component<{
 						size={15}
 						onClick={(e) => {
 							e.stopPropagation();
-							deleteItem(item(), projectId());
+							deleteItem(item());
 						}}
 						onPointerDown={(e) => e.stopPropagation()}
 					>

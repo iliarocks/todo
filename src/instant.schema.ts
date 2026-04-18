@@ -30,7 +30,7 @@ const _schema = i.schema({
 			mode: i.string(),
 			unit: i.string(),
 			interval: i.number(),
-			anchor: i.json().optional(),
+			anchor: i.json(),
 			reference: i.string().optional(),
 		}),
 		visions: i.entity({
