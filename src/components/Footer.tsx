@@ -18,7 +18,7 @@ const Footer: Component = () => {
 
 	return (
 		<>
-			<footer class="absolute inset-x-0 bottom-0 flex px-m py-l justify-between items-center text-[var(--secondary)] bg-linear-to-t from-[var(--background)] to-transparent from-50%">
+			<footer class="absolute inset-x-0 bottom-0 flex px-m py-l justify-between items-center text-[var(--secondary)] bg-linear-to-t from-[var(--background)] to-transparent from-65%">
 				<Show when={!showClose()} fallback={<Close />}>
 					<Navigation />
 					<section class="flex gap-m">
