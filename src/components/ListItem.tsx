@@ -1,13 +1,10 @@
-import { Temporal } from "temporal-polyfill";
 import { Component, Show } from "solid-js";
-import { Item } from "../library/types";
-import Icon from "./Icon";
-import IconButton from "./IconButton";
+import { type Item } from "../library/types";
 import { useNavigation } from "../library/navigation";
+import Icon from "./Icon";
+import { Temporal } from "temporal-polyfill";
 import { deleteItem } from "../library/db";
-
-const format = (t: Temporal.PlainTime) =>
-	t.round({ smallestUnit: "minute" }).toString().slice(0, 5);
+import { Button } from "./Input";
 
 const ListItem: Component<{
 	item: Item;
@@ -18,36 +15,41 @@ const ListItem: Component<{
 	const item = () => props.item;
 	const virtual = () => props.virtual ?? false;
 
+	const formatTime = (time: Temporal.PlainTime) => {
+		return time.toString().slice(0, 5);
+	};
+
 	return (
 		<li
 			onClick={() => navigation.push(`/notes/${item().id}`)}
 			onPointerDown={props.onPointerDown}
-			class="flex items-center justify-between p-xs rounded-md cursor-pointer active:bg-[var(--accent)] touch-none select-none"
+			class="flex items-center justify-between p-xs rounded-md touch-none select-none cursor-pointer active:bg-[var(--accent)]"
 		>
 			<p>{item().text}</p>
-			<div class="flex gap-s items-center text-[var(--secondary)]">
-				<Show when={item().type === "event" && item().start}>
-					<p class="text-[var(--secondary)] text-xs font-light">
-						{format(item().start!)}
-						<Show when={item().end}> – {format(item().end!)}</Show>
-					</p>
-				</Show>
+			<section class="flex gap-xs items-center text-[var(--secondary)]">
 				<Show when={item().type === "todo" && !virtual()}>
-					<IconButton
-						size={15}
+					<Button
 						onClick={(e) => {
 							e.stopPropagation();
 							deleteItem(item());
 						}}
 						onPointerDown={(e) => e.stopPropagation()}
 					>
-						check_box_outline_blank
-					</IconButton>
+						<Icon size={15}>checkbox</Icon>
+					</Button>
+				</Show>
+				<Show when={item().start}>
+					{(start) => (
+						<p class="text-xs font-light">
+							{formatTime(start())}
+							<Show when={item().end}>{(end) => " - " + formatTime(end())}</Show>
+						</p>
+					)}
 				</Show>
 				<Show when={virtual()}>
 					<Icon size={15}>repeat</Icon>
 				</Show>
-			</div>
+			</section>
 		</li>
 	);
 };

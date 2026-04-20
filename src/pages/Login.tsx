@@ -1,6 +1,6 @@
-import { type Component, createSignal, Match, Switch, JSX } from "solid-js";
+import { type Component, createSignal, Match, Switch } from "solid-js";
 import { db } from "../library/db";
-import Button from "../components/Button";
+import { Input, Button } from "../components/Input";
 
 const Login: Component = () => {
 	const [step, setStep] = createSignal<"email" | "code">("email");
@@ -22,38 +22,48 @@ const Login: Component = () => {
 		<main class="grid h-full w-full p-s place-items-center">
 			<Switch>
 				<Match when={step() === "email"}>
-					<form onSubmit={handleEmailSubmit} class="flex flex-col w-full gap-s">
-						<Input
-							autofocus
-							type="email"
-							placeholder="Email"
-							value={email()}
-							onInput={(e) => setEmail(e.currentTarget.value)}
-							required
-						/>
-						<Button type="submit">Send code</Button>
+					<form onSubmit={handleEmailSubmit} class="flex flex-col w-full gap-l">
+						<section class="flex flex-col gap-s">
+							<h2 class="text-xl font-bold">Let's log you in</h2>
+							<p class="text-[var(--secondary)]">
+								Enter your email, and we'll send you a verification code.
+							</p>
+						</section>
+						<section class="flex flex-col gap-s">
+							<Input
+								type="email"
+								value={email()}
+								onInput={(e) => setEmail(e)}
+								autofocus
+								surface
+								required
+							/>
+							<Button type="submit">Send code</Button>
+						</section>
 					</form>
 				</Match>
 				<Match when={step() === "code"}>
-					<form onSubmit={handleCodeSubmit} class="flex flex-col w-full gap-s">
-						<Input
-							autofocus
-							type="text"
-							placeholder="Code"
-							value={code()}
-							onInput={(e) => setCode(e.currentTarget.value)}
-							required
-						/>
-						<Button type="submit">Sign in</Button>
+					<form onSubmit={handleCodeSubmit} class="flex flex-col w-full gap-l">
+						<section class="flex flex-col gap-s">
+							<h2 class="text-xl font-bold">Enter your code</h2>
+							<p class="text-[var(--secondary)]">Check your email, and paste the code you see.</p>
+						</section>
+						<section class="flex flex-col gap-s">
+							<Input
+								type="number"
+								value={code()}
+								onInput={(c) => setCode(c)}
+								autofocus
+								surface
+								required
+							/>
+							<Button type="submit">Sign in</Button>
+						</section>
 					</form>
 				</Match>
 			</Switch>
 		</main>
 	);
-};
-
-const Input: Component<JSX.InputHTMLAttributes<HTMLInputElement>> = (props) => {
-	return <input {...props} class="p-s rounded-lg bg-[var(--surface)]" />;
 };
 
 export default Login;

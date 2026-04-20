@@ -3,12 +3,12 @@ import { createStore, reconcile } from "solid-js/store";
 import {
 	Item,
 	parseItem,
-	parseProject,
-	parseTemplate,
 	parseVision,
-	Project,
+	Group,
 	Template,
 	Vision,
+	parseGroup,
+	parseTemplates,
 } from "../library/types";
 import { useUser } from "./auth";
 import { db } from "../library/db";
@@ -17,53 +17,47 @@ type Data = {
 	items: Accessor<Item[]>;
 	templates: Accessor<Template[]>;
 	vision: Accessor<Vision | undefined>;
-	projects: Accessor<Project[]>;
+	groups: Accessor<Group[]>;
 };
 
 const DataContext = createContext<Data>();
 
 export const DataProvider: ParentComponent = (props) => {
 	const user = useUser();
+	const scope = { where: { "user.id": user.id } };
 	const state = db.useQuery({
 		items: {
-			$: { where: { "user.id": user.id }, order: { order: "asc" } },
+			$: { ...scope, order: { order: "asc" } },
 			template: {},
-			project: {},
+			group: {},
 		},
-		templates: { $: { where: { "user.id": user.id } }, instance: {}, project: {} },
-		visions: { $: { where: { "user.id": user.id } }, reminder: {} },
-		projects: {
-			$: { where: { "user.id": user.id } },
-			items: {},
-			templates: { instance: {} },
-		},
+		templates: { $: scope, instance: {}, group: {} },
+		visions: { $: scope, reminder: {} },
+		groups: { $: scope, items: {}, templates: {} },
 	});
 
 	const [store, setStore] = createStore({
 		items: [] as Item[],
 		templates: [] as Template[],
+		groups: [] as Group[],
 		vision: undefined as Vision | undefined,
-		projects: [] as Project[],
 	});
 
 	createEffect(() => {
 		setStore("items", reconcile((state().data?.items ?? []).map(parseItem)));
-		setStore(
-			"templates",
-			reconcile(
-				(state().data?.templates ?? []).map(parseTemplate).filter((t) => t !== undefined)))
+		setStore("templates", reconcile(parseTemplates(state().data?.templates ?? [])));
+		setStore("groups", reconcile((state().data?.groups ?? []).map(parseGroup)));
 
-		const v = state().data?.visions?.[0];
-		setStore("vision", v ? parseVision(v) : undefined);
-		setStore("projects", reconcile((state().data?.projects ?? []).map(parseProject)));
+		const vision = state().data?.visions?.[0];
+		setStore("vision", vision ? parseVision(vision) : undefined);
 	});
 
 	const value = {
 		items: () => store.items,
 		templates: () => store.templates,
+		groups: () => store.groups,
 		vision: () => store.vision,
-		projects: () => store.projects,
-	};
+	} satisfies Data;
 
 	return <DataContext.Provider value={value}>{props.children}</DataContext.Provider>;
 };

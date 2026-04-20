@@ -1,53 +1,91 @@
-import { Component, createEffect, For, JSX, onCleanup, onMount, Show, splitProps } from "solid-js";
+import { Component, createEffect, createSignal, For, JSX, onCleanup, onMount, Show, splitProps } from "solid-js";
 import { Temporal } from "temporal-polyfill";
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import { compareDate, parseDate, parseTime, today } from "../library/date";
-import { Mode, Project, Unit, UNITS } from "../library/types";
-import Button from "./Button";
+import { Mode, Group, Unit, UNITS } from "../library/types";
+import { autofocus } from "@solid-primitives/autofocus";
+import { parseDate, parseTime, today } from "../library/date";
+autofocus;
 
 const WEEK_DAYS = ["m", "t", "w", "t", "f", "s", "s"];
 const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
 export const Input: Component<
 	Omit<JSX.InputHTMLAttributes<HTMLInputElement>, "value" | "onInput"> & {
-		value: string | undefined;
-		onInput: (value: string | undefined) => void;
+		value: string;
+		onInput: (value: string) => void;
+		surface?: boolean;
 	}
 > = (props) => {
-	const [local, others] = splitProps(props, ["value", "onInput", "class"]);
+	const [local, others] = splitProps(props, ["value", "onInput", "class", "surface"]);
 
 	return (
 		<input
 			{...others}
-			class={`outline-none bg-transparent ${local.class}`}
-			value={local.value ?? ""}
-			onInput={(e) => local.onInput(e.currentTarget.value || undefined)}
+			use:autofocus
+			class={`${local.surface ? "p-s rounded-lg bg-[var(--surface)]" : "outline-none bg-transparent"} ${local.class}`}
+			value={local.value}
+			onInput={(e) => local.onInput(e.currentTarget.value)}
 		/>
+	);
+};
+
+export const Button: Component<JSX.ButtonHTMLAttributes<HTMLButtonElement>> = (props) => {
+	const [local, others] = splitProps(props, ["class", "children"]);
+	return (
+		<button class={`cursor-pointer ${local.class ?? ""}`} {...others}>
+			{local.children}
+		</button>
 	);
 };
 
 export const DateInput: Component<{
 	date: Temporal.PlainDate | undefined;
 	setDate: (date: Temporal.PlainDate | undefined) => void;
+	required?: boolean;
 }> = (props) => {
-	const formatDate = (date: Temporal.PlainDate) => {
-		if (compareDate(date, today()) === 0) return "Today";
+	const format = (date: Temporal.PlainDate) => {
+		if (Temporal.PlainDate.compare(date, today()) === 0) return "Today";
 
 		return date.toLocaleString("en-US", { month: "long", day: "numeric" });
 	};
 
 	return (
-		<span class="relative inline-block">
-			{props.date ? formatDate(props.date) : "No date"}
+		<span class={`relative inline-block ${props.date ? "" : "text-[var(--secondary)]"}`}>
+			{props.date ? format(props.date) : "No date"}
 			<Input
 				type="date"
-				value={props.date?.toString()}
+				value={props.date?.toString() ?? ""}
 				min={today().toString()}
 				onInput={(d) => props.setDate(d ? parseDate(d) : undefined)}
 				class="absolute inset-0 opacity-0 cursor-pointer appearance-none"
-				required
+				required={props.required}
+			/>
+		</span>
+	);
+};
+
+export const MonthInput: Component<{
+	date: Temporal.PlainDate | undefined;
+	setDate: (date: Temporal.PlainDate | undefined) => void;
+	required?: boolean;
+}> = (props) => {
+	const format = (date: Temporal.PlainDate) =>
+		date.toLocaleString("en-US", { month: "long", year: "numeric" });
+
+	return (
+		<span
+			class={`relative inline-block ${props.date ? "" : "text-[var(--secondary)] underline decoration-dotted underline-offset-4"}`}
+		>
+			{props.date ? format(props.date) : "someday"}
+			<Input
+				type="date"
+				value={props.date?.toString() ?? ""}
+				min={today().toString()}
+				onInput={(d) => props.setDate(d ? parseDate(d) : undefined)}
+				class="absolute inset-0 opacity-0 cursor-pointer appearance-none"
+				required={props.required}
 			/>
 		</span>
 	);
@@ -56,24 +94,25 @@ export const DateInput: Component<{
 export const TimeInput: Component<{
 	time: Temporal.PlainTime | undefined;
 	setTime: (time: Temporal.PlainTime | undefined) => void;
+	required?: boolean;
 }> = (props) => {
 	return (
 		<Input
 			type="time"
-			value={props.time?.round({ smallestUnit: "minute" }).toString()}
-			onInput={(t) =>props.setTime(t ? parseTime(t) : undefined)}
+			value={props.time?.toString().slice(0, 5) ?? ""}
+			onInput={(t) => props.setTime(t ? parseTime(t) : undefined)}
 			class={`inline-block relative ${props.time ? "" : "text-[var(--secondary)]"}`}
+			required={props.required}
 		/>
 	);
 };
 
-export const ProjectSelect: Component<{
-	projects: Project[];
+export const GroupSelect: Component<{
+	projects: Group[];
 	selected: string | undefined;
 	onSelect: (id: string | undefined) => void;
 }> = (props) => {
-	const name = () =>
-		props.projects.find((p) => p.id === props.selected)?.name ?? "No project";
+	const name = () => props.projects.find((p) => p.id === props.selected)?.name ?? "No project";
 
 	return (
 		<span class={`relative inline-block ${props.selected ? "" : "text-[var(--secondary)]"}`}>
@@ -93,16 +132,16 @@ export const ProjectSelect: Component<{
 };
 
 export const RepeatToggle: Component<{
-	mode: Mode | undefined;
+	repeat: boolean;
 	onClick: () => void;
 }> = (props) => {
-	const text = () => (props.mode ? "Repeat" : "No Repeat");
+	const text = () => (props.repeat ? "Repeat" : "No Repeat");
 
 	return (
 		<Button
 			type="button"
 			onClick={props.onClick}
-			class={props.mode ? "" : "text-[var(--secondary)]"}
+			class={props.repeat ? "" : "text-[var(--secondary)]"}
 		>
 			{text()}
 		</Button>
@@ -135,46 +174,52 @@ export const RepeatInputs: Component<{
 		props.onChange({ unit, anchor });
 	};
 
+	const [draft, setDraft] = createSignal(props.interval.toString());
+	createEffect(() => setDraft(props.interval.toString()));
+
+	const handleInterval = (s: string) => {
+		setDraft(s);
+		const n = Number(s);
+		if (s && Number.isFinite(n) && n > 0) props.onChange({ interval: n });
+	};
+
 	return (
 		<div class="flex flex-col gap-s">
 			<Show when={props.modes.length > 1}>
 				<ToggleSelect
 					options={props.modes}
 					selected={props.mode ? props.modes.indexOf(props.mode) : 0}
-					onSelect={selectMode}
+					onClick={selectMode}
 				/>
 			</Show>
 			<div class="flex items-center gap-xs">
 				<span class="text-[var(--secondary)]">Every</span>
 				<Input
 					type="number"
-					value={props.interval.toString()}
-					onInput={(s) => props.onChange({ interval: s ? Number(s) : undefined })}
+					value={draft()}
+					onInput={handleInterval}
 					class="w-12 text-center"
 					required
 				/>
 				<div class="grow">
-					<ToggleSelect
-						options={UNITS}
-						selected={UNITS.indexOf(props.unit)}
-						onSelect={selectUnit}
-					/>
+					<ToggleSelect options={UNITS} selected={UNITS.indexOf(props.unit)} onClick={selectUnit} />
 				</div>
 			</div>
 			<Show when={props.anchor.length > 0}>
-				<MultiToggleSelect
+				<ToggleSelect
 					options={props.unit === "week" ? WEEK_DAYS : MONTH_DAYS}
 					selected={props.anchor}
-					onSelect={(anchor) => props.onChange({ anchor })}
+					onClick={(anchor) => props.onChange({ anchor })}
+					multiple
 				/>
 			</Show>
 		</div>
 	);
 };
 
-export const RichText: Component<{
-	value: string | undefined;
-	onInput: (value: string | undefined) => void;
+export const RichInput: Component<{
+	value: string;
+	onInput: (value: string) => void;
 	placeholder?: string;
 }> = (props) => {
 	let ref!: HTMLDivElement;
@@ -194,13 +239,12 @@ export const RichText: Component<{
 				}),
 				...(props.placeholder ? [Placeholder.configure({ placeholder: props.placeholder })] : []),
 			],
-			content: props.value ?? "",
+			content: props.value,
 			editorProps: {
 				attributes: { class: "outline-none" },
 			},
 			onUpdate: ({ editor }) => {
-				const html = editor.getHTML();
-				props.onInput(html || undefined);
+				props.onInput(editor.getHTML());
 			},
 		});
 	});
@@ -209,67 +253,60 @@ export const RichText: Component<{
 
 	createEffect(() => {
 		if (editor && !editor.isFocused && props.value !== editor.getHTML()) {
-			editor.commands.setContent(props.value ?? "");
+			editor.commands.setContent(props.value);
 		}
 	});
 
 	return <div ref={ref} />;
 };
 
-const ToggleBase: Component<{
+type MultipleSelect = {
 	options: readonly string[];
-	isSelected: (i: number) => boolean;
+	selected: number[];
+	onClick: (i: number[]) => void;
+	multiple: true;
+};
+
+type SingleSelect = {
+	options: readonly string[];
+	selected: number;
 	onClick: (i: number) => void;
-}> = (props) => {
+	multiple?: false;
+};
+
+export const ToggleSelect: Component<MultipleSelect | SingleSelect> = (props) => {
+	const isSelected = (i: number) =>
+		props.multiple ? props.selected.includes(i) : i === props.selected;
+
 	const borderRadius = (i: number) => {
 		let classList = "rounded-md";
-		if (props.isSelected(i - 1)) classList += " rounded-l-none";
-		if (props.isSelected(i + 1)) classList += " rounded-r-none";
+		if (isSelected(i - 1)) classList += " rounded-l-none";
+		if (isSelected(i + 1)) classList += " rounded-r-none";
 		return classList;
 	};
 
+	const handleSelect = (i: number) => {
+		if (props.multiple) {
+			const next = isSelected(i) ? props.selected.filter((s) => s !== i) : [...props.selected, i];
+			if (next.length > 0) props.onClick(next);
+		} else {
+			props.onClick(i);
+		}
+	};
+
 	return (
-		<div class="flex overflow-x-auto rounded-md bg-[var(--surface)]">
+		<div class="flex p-2xs overflow-x-auto rounded-md bg-[var(--surface)]">
 			<For each={props.options}>
 				{(option, i) => (
-					<button
+					<Button
 						type="button"
-						onClick={() => props.onClick(i())}
-						class={`cursor-pointer shrink-0 grow px-s py-xs ${borderRadius(i())} ${props.isSelected(i()) ? "bg-[var(--border)]" : ""} md:px-m`}
+						onClick={() => handleSelect(i())}
+						class={`shrink-0 grow px-s py-xs ${borderRadius(i())} ${isSelected(i()) ? "bg-[var(--accent)]" : ""}`}
 					>
 						{option.charAt(0).toUpperCase() + option.slice(1)}
-					</button>
+					</Button>
 				)}
 			</For>
 		</div>
 	);
 };
-
-export const ToggleSelect: Component<{
-	options: readonly string[];
-	selected: number;
-	onSelect: (i: number) => void;
-}> = (props) => (
-	<ToggleBase
-		options={props.options}
-		isSelected={(i) => i === props.selected}
-		onClick={(i) => props.onSelect(i)}
-	/>
-);
-
-export const MultiToggleSelect: Component<{
-	options: readonly string[];
-	selected: number[];
-	onSelect: (i: number[]) => void;
-}> = (props) => (
-	<ToggleBase
-		options={props.options}
-		isSelected={(i) => props.selected.includes(i)}
-		onClick={(i) => {
-			const next = props.selected.includes(i)
-				? props.selected.filter((s) => s !== i)
-				: [...props.selected, i];
-			if (next.length > 0) props.onSelect(next);
-		}}
-	/>
-);

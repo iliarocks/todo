@@ -1,21 +1,21 @@
 import { Component, Match, Show, Switch } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Item, MODES, Template } from "../library/types";
+import { Group, Item, Mode, MODES, Template, Unit } from "../library/types";
 import { useData } from "../context/data";
 import { useNavigation } from "../library/navigation";
 import {
 	deleteItem,
 	deleteTemplate,
-	linkItemProject,
-	linkTemplateProject,
-	unlinkItemProject,
-	unlinkTemplateProject,
+	linkItemGroup,
+	linkTemplateGroup,
+	unlinkItemGroup,
+	unlinkTemplateGroup,
 	updateItem,
 	updateTemplate,
 } from "../library/db";
-import { DateInput, ProjectSelect, RepeatInputs, TimeInput } from "./Form";
-import Button from "./Button";
+import { DateInput, GroupSelect, RepeatInputs, TimeInput, Button } from "./Input";
 import Modal from "./Modal";
+import { Temporal } from "temporal-polyfill";
 
 const Edit: Component<{
 	item?: Item;
@@ -36,6 +36,16 @@ const Edit: Component<{
 	);
 };
 
+type TemplateForm = {
+	start?: Temporal.PlainTime;
+	end?: Temporal.PlainTime;
+	mode: Mode;
+	unit: Unit;
+	interval: number;
+	anchor: number[];
+	group?: Pick<Group, "id">;
+}
+
 const EditTemplateForm: Component<{
 	template: Template;
 	onClose: () => void;
@@ -43,14 +53,14 @@ const EditTemplateForm: Component<{
 	const data = useData();
 	const navigation = useNavigation();
 	const template = () => props.template;
-	const [form, setForm] = createStore({
+	const [form, setForm] = createStore<TemplateForm>({
 		start: template().start,
 		end: template().end,
 		mode: template().mode,
 		unit: template().unit,
 		interval: template().interval,
 		anchor: template().anchor,
-		projectId: template().project?.id,
+		group: template().group,
 	});
 
 	const handleSubmit = (e: SubmitEvent) => {
@@ -63,16 +73,17 @@ const EditTemplateForm: Component<{
 			interval: form.interval,
 			anchor: form.anchor,
 		});
-		const originalProjectId = template().project?.id;
-		if (form.projectId !== originalProjectId) {
-			const instanceId = template().instance.id;
-			if (originalProjectId) {
-				unlinkTemplateProject(template().id, originalProjectId);
-				unlinkItemProject(instanceId, originalProjectId);
+
+		const originalProject = template().group;
+		if (form.group?.id !== originalProject?.id) {
+
+			if (originalProject) {
+				unlinkTemplateGroup(template().id, originalProject.id);
+				unlinkItemGroup(template().instance.id, originalProject.id);
 			}
-			if (form.projectId) {
-				linkTemplateProject(template().id, form.projectId);
-				linkItemProject(instanceId, form.projectId);
+			if (form.group) {
+				linkTemplateGroup(template().id, form.group.id);
+				linkItemGroup(template().instance.id, form.group.id);
 			}
 		}
 		props.onClose();
@@ -80,6 +91,7 @@ const EditTemplateForm: Component<{
 
 	const handleDelete = () => {
 		deleteTemplate(template());
+		props.onClose();
 		navigation.back();
 	};
 
@@ -92,16 +104,16 @@ const EditTemplateForm: Component<{
 				<Button type="submit">Save</Button>
 			</section>
 			<section class="flex justify-between">
-				<Show when={template().type === "event" && form.start && form.end}>
+				<Show when={template().type === "event"}>
 					<section class="flex gap-xs">
-						<TimeInput time={form.start!} setTime={(start) => setForm({ start })} />
-						<TimeInput time={form.end!} setTime={(end) => setForm({ end })} />
+						<TimeInput time={form.start} setTime={(start) => setForm({ start })} required />
+						<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
 					</section>
 				</Show>
-				<ProjectSelect
-					projects={data.projects()}
-					selected={form.projectId}
-					onSelect={(projectId) => setForm({ projectId })}
+				<GroupSelect
+					projects={data.groups()}
+					selected={form.group?.id}
+					onSelect={(id) =>  setForm({ group: id ? { id } : undefined })}
 				/>
 			</section>
 			<RepeatInputs
@@ -109,11 +121,18 @@ const EditTemplateForm: Component<{
 				mode={form.mode}
 				interval={form.interval}
 				unit={form.unit}
-				anchor={form.anchor!}
+				anchor={form.anchor}
 				onChange={(patch) => setForm(patch)}
 			/>
 		</form>
 	);
+};
+
+type ItemForm = {
+	date: Temporal.PlainDate;
+	start?: Temporal.PlainTime;
+	end?: Temporal.PlainTime;
+	group?: Pick<Group, "id">;
 };
 
 const EditItemForm: Component<{
@@ -123,26 +142,27 @@ const EditItemForm: Component<{
 	const data = useData();
 	const navigation = useNavigation();
 	const item = () => props.item;
-	const [form, setForm] = createStore({
+	const [form, setForm] = createStore<ItemForm>({
 		date: item().date,
 		start: item().start,
 		end: item().end,
-		projectId: item().project?.id,
+		group: item().group,
 	});
 
 	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 		updateItem(item(), { date: form.date, start: form.start, end: form.end });
-		const originalProjectId = item().project?.id;
-		if (form.projectId !== originalProjectId) {
-			if (originalProjectId) unlinkItemProject(item().id, originalProjectId);
-			if (form.projectId) linkItemProject(item().id, form.projectId);
+		const originalGroup = item().group;
+		if (form.group?.id !== originalGroup?.id) {
+			if (originalGroup) unlinkItemGroup(item().id, originalGroup.id);
+			if (form.group) linkItemGroup(item().id, form.group.id);
 		}
 		props.onClose();
 	};
 
 	const handleDelete = () => {
 		deleteItem(item());
+		props.onClose();
 		navigation.back();
 	};
 
@@ -157,15 +177,15 @@ const EditItemForm: Component<{
 			<section class="flex justify-between">
 				<section class="flex gap-xs">
 					<DateInput date={form.date} setDate={(date) => setForm({ date })} />
-					<Show when={item().type === "event" && form.start && form.end}>
-						<TimeInput time={form.start!} setTime={(start) => setForm({ start })} />
-						<TimeInput time={form.end!} setTime={(end) => setForm({ end })} />
+					<Show when={item().type === "event"}>
+						<TimeInput time={form.start} setTime={(start) => setForm({ start })} required />
+						<TimeInput time={form.end} setTime={(end) => setForm({ end })} />
 					</Show>
 				</section>
-				<ProjectSelect
-					projects={data.projects()}
-					selected={form.projectId}
-					onSelect={(projectId) => setForm({ projectId })}
+				<GroupSelect
+					projects={data.groups()}
+					selected={form.group?.id}
+					onSelect={(id) =>  setForm({ group: id ? { id } : undefined })}
 				/>
 			</section>
 		</form>

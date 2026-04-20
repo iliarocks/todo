@@ -1,18 +1,20 @@
 import { id, init, TransactionChunk, User } from "@instantdb/solidjs";
 import schema from "../instant.schema";
-import { Temporal } from "temporal-polyfill";
 import {
+	FlatGroup,
+	FlatItem,
+	FlatTemplate,
+	Group,
 	Item,
-	Project,
-	Template,
-	Vision,
 	serializeItem,
 	serializeItemUpdate,
 	serializeTemplate,
 	serializeTemplateUpdate,
+	Template,
+	Vision,
 } from "./types";
-import { compareDate, today } from "./date";
 import { nextDate } from "./repeat";
+import { Temporal } from "temporal-polyfill";
 
 export const db = init({
 	appId: import.meta.env.VITE_INSTANT_APP_ID!,
@@ -20,10 +22,10 @@ export const db = init({
 });
 
 export const createItem = (
-	item: Omit<Item, "id" | "template" | "project">,
+	item: Omit<FlatItem, "id">,
 	user: User,
-	template?: Omit<Template, "id" | "reference" | "instance" | "project">,
-	project?: Pick<Project, "id">,
+	template?: Omit<FlatTemplate, "id" | "reference">,
+	group?: Pick<FlatGroup, "id">,
 ) => {
 	const itemId = id();
 	const transactions: TransactionChunk<typeof schema, any>[] = [];
@@ -43,23 +45,20 @@ export const createItem = (
 		);
 	}
 
-	if (project) {
-		db.transact(transactions.map((t) => t.link({ project: project.id })));
+	if (group) {
+		db.transact(transactions.map((t) => t.link({ group: group.id })));
 	} else {
 		db.transact(transactions);
 	}
 };
 
-export const updateItem = (
-	item: Item,
-	update: Partial<Omit<Item, "id" | "template" | "project">>,
-) => {
+export const updateItem = (item: Item, update: Partial<Omit<FlatItem, "id">>) => {
 	db.transact(db.tx.items[item.id].update(serializeItemUpdate(update)));
 };
 
 export const updateTemplate = (
 	template: Template,
-	update: Partial<Omit<Template, "id" | "reference" | "instance" | "project">>,
+	update: Partial<Omit<FlatTemplate, "id" | "reference">>,
 ) => {
 	db.transact(db.tx.templates[template.id].update(serializeTemplateUpdate(update)));
 };
@@ -89,43 +88,43 @@ export const deleteTemplate = (template: Template) => {
 	db.transact(db.tx.templates[template.id].delete());
 };
 
+export const createGroup = (name: string, active: boolean, user: User) => {
+	db.transact(db.tx.groups[id()].create({ name, active }).link({ user: user.id }));
+};
+
+export const updateGroup = (
+	project: Group,
+	update: { name?: string; notes?: string | null; active?: boolean },
+) => {
+	db.transact(db.tx.groups[project.id].update(update));
+};
+
+export const deleteGroup = (group: Group) => {
+	db.transact(db.tx.groups[group.id].delete());
+};
+
+export const linkItemGroup = (itemId: string, groupId: string) => {
+	db.transact(db.tx.items[itemId].link({ group: groupId }));
+};
+
+export const unlinkItemGroup = (itemId: string, groupId: string) => {
+	db.transact(db.tx.items[itemId].unlink({ group: groupId }));
+};
+
+export const linkTemplateGroup = (templateId: string, groupId: string) => {
+	db.transact(db.tx.templates[templateId].link({ group: groupId }));
+};
+
+export const unlinkTemplateGroup = (templateId: string, groupId: string) => {
+	db.transact(db.tx.templates[templateId].unlink({ group: groupId }));
+};
+
 export const createVision = (text: string, user: User) => {
 	db.transact(db.tx.visions[id()].create({ text }).link({ user: user.id }));
 };
 
 export const updateVision = (vision: Vision, text: string) => {
 	db.transact(db.tx.visions[vision.id].update({ text }));
-};
-
-export const createProject = (name: string, active: boolean, user: User) => {
-	db.transact(db.tx.projects[id()].create({ name, active }).link({ user: user.id }));
-};
-
-export const updateProject = (
-	project: Project,
-	update: { name?: string; notes?: string | null; active?: boolean },
-) => {
-	db.transact(db.tx.projects[project.id].update(update));
-};
-
-export const deleteProject = (project: Project) => {
-	db.transact(db.tx.projects[project.id].delete());
-};
-
-export const linkItemProject = (itemId: string, projectId: string) => {
-	db.transact(db.tx.items[itemId].link({ project: projectId }));
-};
-
-export const unlinkItemProject = (itemId: string, projectId: string) => {
-	db.transact(db.tx.items[itemId].unlink({ project: projectId }));
-};
-
-export const linkTemplateProject = (templateId: string, projectId: string) => {
-	db.transact(db.tx.templates[templateId].link({ project: projectId }));
-};
-
-export const unlinkTemplateProject = (templateId: string, projectId: string) => {
-	db.transact(db.tx.templates[templateId].unlink({ project: projectId }));
 };
 
 export const saveReminder = (
@@ -136,7 +135,7 @@ export const saveReminder = (
 ) => {
 	const { reminder } = vision;
 
-	if (reminder && compareDate(reminder.date, today()) >= 0) {
+	if (reminder && Temporal.PlainDate.compare(reminder.date, Temporal.Now.plainDateISO()) >= 0) {
 		db.transact(db.tx.items[reminder.id].update(serializeItemUpdate({ date })));
 		return;
 	}

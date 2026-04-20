@@ -1,6 +1,8 @@
 import { Temporal } from "temporal-polyfill";
-import { Item, Template } from "./types";
-import { advanceDate } from "./date";
+import { FlatTemplate, Item, Template, Unit } from "./types";
+
+export const advanceDate = (date: Temporal.PlainDate, interval: number, unit: Unit) =>
+	date.add({ [unit === "day" ? "days" : unit === "week" ? "weeks" : "months"]: interval });
 
 const nextWeekDate = (
 	date: Temporal.PlainDate,
@@ -47,7 +49,7 @@ const nextMonthDate = (
 
 export const nextDate = (
 	date: Temporal.PlainDate,
-	template: Omit<Template, "instance" | "project">,
+	template: FlatTemplate,
 ): Temporal.PlainDate => {
 	if (template.mode === "relative" || template.unit === "day") {
 		return advanceDate(date, template.interval, template.unit);

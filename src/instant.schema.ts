@@ -15,18 +15,18 @@ const _schema = i.schema({
 		items: i.entity({
 			type: i.string(),
 			text: i.string(),
-			date: i.string().indexed(),
+			date: i.string(),
+			notes: i.string().optional(),
 			start: i.string().optional(),
 			end: i.string().optional(),
-			notes: i.string().optional(),
 			order: i.string().indexed(),
 		}),
 		templates: i.entity({
 			type: i.string(),
 			text: i.string(),
+			notes: i.string().optional(),
 			start: i.string().optional(),
 			end: i.string().optional(),
-			notes: i.string().optional(),
 			mode: i.string(),
 			unit: i.string(),
 			interval: i.number(),
@@ -36,7 +36,7 @@ const _schema = i.schema({
 		visions: i.entity({
 			text: i.string(),
 		}),
-		projects: i.entity({
+		groups: i.entity({
 			name: i.string(),
 			notes: i.string().optional(),
 			active: i.boolean(),
@@ -63,17 +63,17 @@ const _schema = i.schema({
 			forward: { on: "visions", has: "one", label: "reminder" },
 			reverse: { on: "items", has: "one", label: "vision" },
 		},
-		projectUser: {
-			forward: { on: "projects", has: "one", label: "user", onDelete: "cascade", required: true },
-			reverse: { on: "$users", has: "many", label: "projects" },
+		groupUser: {
+			forward: { on: "groups", has: "one", label: "user", onDelete: "cascade", required: true },
+			reverse: { on: "$users", has: "many", label: "groups" },
 		},
-		itemProject: {
-			forward: { on: "items", has: "one", label: "project" },
-			reverse: { on: "projects", has: "many", label: "items" },
+		itemGroup: {
+			forward: { on: "items", has: "one", label: "group" },
+			reverse: { on: "groups", has: "many", label: "items" },
 		},
-		templateProject: {
-			forward: { on: "templates", has: "one", label: "project" },
-			reverse: { on: "projects", has: "many", label: "templates" },
+		templateGroup: {
+			forward: { on: "templates", has: "one", label: "group" },
+			reverse: { on: "groups", has: "many", label: "templates" },
 		},
 	},
 	rooms: {},

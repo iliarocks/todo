@@ -3,9 +3,8 @@ import { type Component, createSignal, Show } from "solid-js";
 import { useData } from "../context/data";
 import { updateItem, updateTemplate } from "../library/db";
 import { useNavigation } from "../library/navigation";
-import { Input, RichText } from "../components/Form";
+import { Input, Button, RichInput } from "../components/Input";
 import Edit from "../components/Edit";
-import Button from "../components/Button";
 
 const Notes: Component = () => {
 	const params = useParams<{ id: string }>();
@@ -16,7 +15,7 @@ const Notes: Component = () => {
 	const template = () => data.templates().find((t) => t.id === params.id);
 	const item = () => data.items().find((i) => i.id === params.id);
 	const entry = () => template() ?? item();
-	const project = () => template()?.project ?? item()?.project;
+	const project = () => template()?.group ?? item()?.group;
 
 	const saveText = (text: string) => {
 		const t = template();
@@ -25,18 +24,19 @@ const Notes: Component = () => {
 		else if (i) updateItem(i, { text });
 	};
 
-	const saveNotes = (notes: string | undefined) => {
+	const saveNotes = (notes: string) => {
+		const value = notes || undefined;
 		const t = template();
 		const i = item();
-		if (t) updateTemplate(t, { notes });
-		else if (i) updateItem(i, { notes });
+		if (t) updateTemplate(t, { notes: value });
+		else if (i) updateItem(i, { notes: value });
 	};
 
 	return (
 		<Show when={entry()}>
 			{(entry) => (
 				<div class="flex flex-col gap-m h-full justify-center">
-					<section class="flex justify-between gap-m text-[var(--secondary)]">
+					<section class="flex justify-between gap-m">
 						<Input
 							type="text"
 							value={entry().text}
@@ -52,7 +52,7 @@ const Notes: Component = () => {
 							<Button onClick={() => setEditOpen(true)}>Edit</Button>
 						</div>
 					</section>
-					<RichText value={entry().notes} onInput={saveNotes} />
+					<RichInput value={entry().notes ?? ""} onInput={saveNotes} placeholder="Notes..." />
 					<Show when={editOpen()}>
 						<Edit item={item()} template={template()} onClose={() => setEditOpen(false)} />
 					</Show>
