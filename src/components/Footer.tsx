@@ -12,7 +12,9 @@ const Footer: Component = () => {
 	const [settingsOpen, setSettingsOpen] = createSignal(false);
 
 	const showClose = () =>
-		location.pathname.startsWith("/notes") || location.pathname.startsWith("/docs");
+		location.pathname.startsWith("/notes") ||
+		location.pathname.startsWith("/docs") ||
+		location.pathname.startsWith("/project");
 
 	return (
 		<>
