@@ -36,7 +36,7 @@ const Upcoming: Component = () => {
 	};
 
 	return (
-		<div class="flex flex-col gap-2xl h-full overflow-y-auto">
+		<div class="flex flex-col gap-2xl">
 			<For each={dates()} fallback={<Empty />}>
 				{(dateISO) => {
 					const itemGroup = () => items().filter((i) => i.date.toString() === dateISO);
