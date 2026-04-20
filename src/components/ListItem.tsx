@@ -23,7 +23,11 @@ const ListItem: Component<{
 		<li
 			onClick={() => navigation.push(`/notes/${item().id}`)}
 			onPointerDown={props.onPointerDown}
-			class="flex items-center justify-between p-xs rounded-md touch-none select-none cursor-pointer active:bg-[var(--accent)]"
+			classList={{
+				"flex items-center justify-between p-xs rounded-md select-none cursor-pointer active:bg-[var(--accent)]":
+					true,
+				"touch-none": !!props.onPointerDown,
+			}}
 		>
 			<p>{item().text}</p>
 			<section class="flex gap-xs items-center text-[var(--secondary)]">
